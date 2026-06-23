@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Termo de Responsabilidade - Projeto Abençoar</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+        background: white;
+        font-family: 'Times New Roman', Times, serif;
+        color: black;
+        padding: 40px;
+        font-size: 15px;
+    }
+    .timbre {
+        text-align: center;
+        border-bottom: 2px solid #000;
+        padding-bottom: 10px;
+        margin-bottom: 30px;
+    }
+    .conteudo {
+        text-align: justify;
+        line-height: 1.6;
+    }
+    .clausula {
+        font-weight: bold;
+        margin-top: 20px;
+        margin-bottom: 5px;
+    }
+    .linhas-assinatura {
+        margin-top: 70px;
+    }
+    @media print {
+        body { padding: 0; }
+        .no-print { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/navigation :: header}"></div>
+
+<div class="container text-end no-print mb-4">
+  <button onclick="window.print()" class="btn btn-dark fw-bold shadow-sm">🖨️ Emitir Impressão / Salvar PDF</button>
+</div>
+
+<div class="timbre">
+  <h3 class="fw-bold mb-1">INSTITUTO EDUCACIONAL E SOCIAL DE MINAS GERAIS</h3>
+  <h4 class="fw-bold text-muted">PROJETO ABENÇOAR</h4>
+  <p class="mb-0 small">CNPJ: 01.834.744/0001-74 | Rua Louis Franciscon, 199 – Jardim das Rosas – Ibirité/MG</p>
+</div>
+
+<div class="conteudo">
+  <h4 class="text-center fw-bold mb-4">TERMO DE RESPONSABILIDADE</h4>
+
+  <p>Pelo presente instrumento particular de “TERMO DE RESPONSABILIDADE”, de um lado o <strong>INSTITUTO EDUCACIONAL E SOCIAL DE MINAS GERAIS – PROJETO ABENÇOAR</strong>, inscrito no CNPJ: 01.834.744/0001-74, sito a Rua Louis Franciscon, 199 – Jardim das Rosas – IBIRITÉ/MG, nesta cidade, e Por outro lado o Associado (a):</p>
+
+  <p>Sr.(a) <strong th:text="${b.nome}">[NOME]</strong>,
+    Endereço: <strong th:text="${b.endereco}">[ENDERECO]</strong>,
+    CPF nº <strong th:text="${b.cpf.numero}">[CPF]</strong>,
+    Celular: <strong th:text="${b.telefone.numero}">[CELULAR]</strong> e
+    Data de Nascimento: <strong th:text="${#temporals.format(b.dataNascimento, 'dd/MM/yyyy')}">[DATADENASCIMENTO]</strong>.</p>
+
+  <p th:if="${b.nomeResponsavel != null and !b.nomeResponsavel.empty}" class="alert alert-light border p-2">
+    <strong>REPRESENTANTE LEGAL:</strong> Fica registrado que o beneficiário acima é menor de idade, representado neste ato por seu responsável, o(a) Sr.(a) <strong th:text="${b.nomeResponsavel}">Nome do Responsável</strong>.
+  </p>
+
+  <div class="clausula">CLÁUSULA PRIMEIRA: CONTRIBUIÇÃO SOCIAL</div>
+  <p>Conforme art. 43 inciso I do Estatuto social do ISEMG, os associados contribuirão com a instituição, sendo que as contribuições recebidas serão aplicadas integralmente na realização de seus objetivos sociais, sem distribuição de lucros, bonificações ou vantagens a dirigentes mantenedores ou associados, sob nenhuma forma ou pretexto.</p>
+
+  <div class="clausula">CLÁUSULA SEGUNDA: USO DE IMAGEM</div>
+  <p>Autorizo de forma livre, informada e irrevogável, o uso da minha imagem, voz e nome em fotos, vídeos e demais materiais produzido durantes as atividades, exclusivamente para fins de divulgação institucional e prestação de contas do ISEMG/PROJETO ABENÇOAR em redes sociais, relatórios e campanhas. Caso não autorize, comprometo-me a formalizar por escrito a coordenação. A não manifestação será considerada consentimento tácito.</p>
+
+  <div class="clausula">CLÁUSULA TERCEIRA: CONFORMIDADE COM A LGPD (LEI 13.709/2018)</div>
+  <p>O ISEMG/PROJETO ABENÇOAR, na qualidade de controlador dos dados pessoais aqui coletados, declara que atua em plena conformidade com a LGPD (Lei 13.709/2018).</p>
+  <p>Todos os dados informados nesta ficha serão tratados com segurança, confidencialidade e finalidade legítima, estritamente para fins de:</p>
+  <ul>
+    <li>Cadastro e organização;</li>
+    <li>Comunicação com o (a) participante;</li>
+    <li>Emissão de relatórios e comprovações institucionais.</li>
+  </ul>
+  <p>Os dados não serão compartilhados com terceiros, salvo nos casos autorizados por lei ou quando necessário para execução da atividade inscrita como por exemplo agendamento jurídico ou médico.</p>
+  <p>A qualquer momento o titular dos dados poderá solicitar:</p>
+  <ul>
+    <li>Acesso às suas informações;</li>
+    <li>Correção e/ou alterações de dados;</li>
+    <li>Exclusão de seus dados pessoais, respeitadas as obrigações legais do projeto;</li>
+    <li>Revogação do consentimento aqui concedido.</li>
+  </ul>
+
+  <p>O ISEMG/PROJETO ABENÇOAR mantém política de proteção de dados atualizada. Com controle de acesso restrito, armazenamento seguro e compromisso ético com todos os envolvidos.</p>
+
+  <p class="mt-4">Declaro que todas as informações acima são verdadeiras e estou ciente do termo de responsabilidade e declaro está apto e em condições de participar da atividade por mim escolhida.</p>
+
+  <p class="text-end mt-5 fw-bold">
+    IBIRITÉ/MG, <span th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy')}">DATA ATUAL</span>.
+  </p>
+
+  <div class="row linhas-assinatura text-center">
+    <div class="col-6">
+      <hr class="w-75 mx-auto">
+      <p class="small fw-bold">ISEMG / PROJETO ABENÇOAR</p>
+    </div>
+    <div class="col-6">
+      <hr class="w-75 mx-auto">
+      <p class="small fw-bold">ASSOCIADO (A)</p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

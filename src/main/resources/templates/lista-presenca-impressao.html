@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Lista de Presença - Projeto Abençoar</title>
+    <style>
+        /* Configuração para a folha de papel A4 */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+        }
+        .header h1 { margin: 0; font-size: 22px; }
+        .header p { margin: 5px 0 0 0; font-size: 14px; }
+
+        /* Estilização da Tabela de Chamada */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: left;
+            font-size: 11px; /* Um pouco menor para caber tudo na folha */
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        /* Tamanho fixo para as caixas de seleção manuais (visto) */
+        .col-visto {
+            width: 60px;
+            text-align: center;
+        }
+        .checkbox-placeholder {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 1px solid #000;
+            margin-top: 3px;
+        }
+        /* Comando CSS para esconder botões na hora de imprimir */
+        @media print {
+            .btn-imprimir { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/navigation :: header}"></div>
+
+<div class="header">
+    <h1>PROJETO ABENÇOAR</h1>
+    <p>Lista de Frequência e Presença - Unidade: <span th:text="${unidade}">Cascata</span></p>
+    <p>Especialidade: <span th:text="${especialidade}">Fisioterapia</span></p>
+</div>
+
+<button onclick="window.print()" class="btn-imprimir" style="padding: 10px 20px; margin-bottom: 20px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+    🖨️ Imprimir Lista
+</button>
+
+<table>
+    <thead>
+    <tr>
+        <th>Horário</th>
+        <th>Dia</th>
+        <th>Nome</th> <th>CPF</th>
+        <th>Telefone</th>
+        <th class="col-visto">Data __/__</th>
+        <th class="col-visto">Data __/__</th>
+        <th class="col-visto">Data __/__</th>
+        <th class="col-visto">Data __/__</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="agendamento : ${agendamentos}">
+        <td th:text="${agendamento.horario}">08:00</td>
+
+        <td th:text="${#temporals.format(agendamento.data, 'EEEE', #locale.forLanguageTag('pt-BR'))}">Segunda-feira</td>
+
+        <td th:text="${agendamento.beneficiario != null ? agendamento.beneficiario.nome : 'HORÁRIO VAGO'}"
+            th:style="${agendamento.beneficiario == null ? 'color: red; font-weight: bold;' : ''}">João da Silva</td>
+
+        <td th:text="${agendamento.beneficiario != null and agendamento.beneficiario.cpf != null ? agendamento.beneficiario.cpf.numero : '-'}">-</td>
+        <td th:text="${agendamento.beneficiario != null and agendamento.beneficiario.telefone != null ? agendamento.beneficiario.telefone.numero : '-'}">-</td>
+
+        <td class="col-visto"><span class="checkbox-placeholder"></span></td>
+        <td class="col-visto"><span class="checkbox-placeholder"></span></td>
+        <td class="col-visto"><span class="checkbox-placeholder"></span></td>
+        <td class="col-visto"><span class="checkbox-placeholder"></span></td>
+    </tr>
+    </tbody>
+</table>
+
+<script>
+    // Dispara a janela de impressão nativa assim que a página estiver toda carregada
+    window.addEventListener('DOMContentLoaded', (event) => {
+        window.print();
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Ficha de Cadastro - Projeto Abençoar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="m-0 p-0" th:data-especialidade="${#strings.toLowerCase(especialidadeSelecionada)}">
+
+<div th:replace="~{fragments/navigation :: header}"></div>
+
+<div class="container-fluid p-0 m-0" style="min-height: 100vh;">
+    <div class="card border-0 rounded-0 shadow-none" style="min-height: 100vh;">
+
+        <div class="card-header bg-dark text-white py-4 px-5">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">📋 Ficha de Cadastro Completa - Projeto Abençoar</h2>
+                <span class="badge bg-success fs-5" th:text="'Área: ' + ${especialidadeSelecionada}">Modo: Novo Beneficiário</span>
+            </div>
+        </div>
+
+        <div class="card-body p-5 bg-light">
+            <form th:action="@{/agenda/salvar-cadastro}" th:object="${beneficiario}" method="post" class="row g-3 justify-content-center">
+                <input type="hidden" th:field="*{matricula}" />
+                <input type="hidden" name="especialidadeSelecionada" th:value="${especialidadeSelecionada}" />
+                <div class="col-md-10 bg-white p-4 rounded shadow-sm">
+                    <h4 class="text-secondary border-bottom pb-2 mb-4">🚀 Dados Pessoais do Beneficiário</h4>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Nome Completo</label>
+                            <input type="text" th:field="*{nome}" class="form-control form-control-lg" required placeholder="Nome do paciente" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Data de Nascimento</label>
+                            <input type="date" id="dataNascimento" th:field="*{dataNascimento}" class="form-control form-control-lg" required />
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">CPF</label>
+                            <input type="text" name="cpfInput" class="form-control form-control-lg" placeholder="000.000.000-00" required />
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Telefone / WhatsApp</label>
+                            <input type="text" name="telefoneInput" class="form-control form-control-lg" placeholder="(31) 99999-9999" required />
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Unidade (Região)</label>
+                            <input type="text" th:field="*{unidade}" class="form-control form-control-lg" placeholder="Ex: Cascata" required />
+                        </div>
+
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold">Endereço Completo</label>
+                            <input type="text" th:field="*{endereco}" class="form-control form-control-lg" placeholder="Rua, número, complemento e bairro" required />
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">E-mail</label>
+                            <input type="email" th:field="*{email}" class="form-control form-control-lg" placeholder="exemplo@email.com" />
+                        </div>
+
+                        <div class="col-12" id="containerResponsavel" style="display: none;">
+                            <div class="alert alert-warning border-0 shadow-sm">
+                                <label class="form-label fw-bold text-dark">⚠️ Paciente Menor de Idade. Nome do Responsável Legal:</label>
+                                <input type="text" id="nomeResponsavel" th:field="*{nomeResponsavel}" class="form-control form-control-lg" placeholder="Nome da mãe, pai ou tutor legal" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div th:if="${not #lists.isEmpty(profissionaisDisponiveis)}" class="mt-5">
+                        <h4 class="text-secondary border-bottom pb-2 mb-4">👤 Relacionar Profissional Responsável</h4>
+                        <div class="card bg-light border-0 p-4">
+                            <label class="form-label fw-bold text-primary fs-5 mb-3">
+                                Select o profissional relacionado no momento para este atendimento:
+                            </label>
+                            <div class="row g-3 px-2">
+                                <div th:each="prof : ${profissionaisDisponiveis}" class="col-md-4">
+                                    <div class="card p-3 text-center border-primary bg-white shadow-sm h-100">
+                                        <div class="form-check d-flex align-items-center m-0">
+                                            <input class="form-check-input me-3" type="radio" name="profissionalSelecionado"
+                                                   th:id="'prof_' + ${prof}" th:value="${prof}" style="transform: scale(1.3);" />
+                                            <label class="form-check-label fw-bold text-dark fs-5" th:for="'prof_' + ${prof}" th:text="${prof}">Nome do Profissional</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h4 class="text-secondary border-bottom pb-2 mt-5 mb-4">📅 Definição de Agenda e Vaga</h4>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card bg-light border-0 p-4">
+
+                                <div id="divTurmaFixa">
+                                    <label class="form-label fw-bold text-success fs-5 mb-3">
+                                        🗓️ Selecione os Dias da Semana para a Turma (Permite mais de um dia):
+                                    </label>
+
+                                    <div class="row g-3 px-2">
+                                        <div class="col-6 col-md-4 col-lg-2">
+                                            <div class="card p-3 text-center border-success bg-white shadow-sm h-100">
+                                                <div class="form-check d-flex flex-column align-items-center justify-content-center h-100 m-0">
+                                                    <input class="form-check-input check-dia-semana" type="checkbox" name="diasSemanaSelecionados" value="MONDAY" id="checkSegunda" style="transform: scale(1.3); margin-bottom: 8px;">
+                                                    <label class="form-check-label fw-bold text-dark mt-1" for="checkSegunda">Segunda</label>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-6 col-md-4 col-lg-2">
+                                            <div class="card p-3 text-center border-success bg-white shadow-sm h-100">
+                                                <div class="form-check d-flex flex-column align-items-center justify-content-center h-100 m-0">
+                                                    <input class="form-check-input check-dia-semana" type="checkbox" name="diasSemanaSelecionados" value="TUESDAY" id="checkTerca" style="transform: scale(1.3); margin-bottom: 8px;">
+                                                    <label class="form-check-label fw-bold text-dark mt-1" for="checkTerca">Terça</label>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-6 col-md-4 col-lg-2">
+                                            <div class="card p-3 text-center border-success bg-white shadow-sm h-100">
+                                                <div class="form-check d-flex flex-column align-items-center justify-content-center h-100 m-0">
+                                                    <input class="form-check-input check-dia-semana" type="checkbox" name="diasSemanaSelecionados" value="WEDNESDAY" id="checkQuarta" style="transform: scale(1.3); margin-bottom: 8px;">
+                                                    <label class="form-check-label fw-bold text-dark mt-1" for="checkQuarta">Quarta</label>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-6 col-md-4 col-lg-2">
+                                            <div class="card p-3 text-center border-success bg-white shadow-sm h-100">
+                                                <div class="form-check d-flex flex-column align-items-center justify-content-center h-100 m-0">
+                                                    <input class="form-check-input check-dia-semana" type="checkbox" name="diasSemanaSelecionados" value="THURSDAY" id="checkQuinta" style="transform: scale(1.3); margin-bottom: 8px;">
+                                                    <label class="form-check-label fw-bold text-dark mt-1" for="checkQuinta">Quinta</label>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-6 col-md-4 col-lg-2">
+                                            <div class="card p-3 text-center border-success bg-white shadow-sm h-100">
+                                                <div class="form-check d-flex flex-column align-items-center justify-content-center h-100 m-0">
+                                                    <input class="form-check-input check-dia-semana" type="checkbox" name="diasSemanaSelecionados" value="FRIDAY" id="checkSexta" style="transform: scale(1.3); margin-bottom: 8px;">
+                                                    <label class="form-check-label fw-bold text-dark mt-1" for="checkSexta">Sexta</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mt-4">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold text-success">⏰ Digite ou Escolha o Horário da Turma:</label>
+                                            <input type="time" id="selectHorarioTurma" name="horarioTurma" class="form-control form-control-lg border-success" required />
+                                            <small class="text-muted">Clique no relógio para escolher ou digite diretamente hora e minuto.</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="divAgendaClinica" style="display: none;">
+                                    <label class="form-label fw-bold text-danger fs-5 mb-3">
+                                        📅 Defina a Data e Horário para o Atendimento Clínico Individual:
+                                    </label>
+
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold text-danger">Data do Atendimento:</label>
+                                            <input type="date" id="inputDataClinica" name="dataClinica" class="form-control form-control-lg border-danger" />
+                                            <small class="text-muted">Escolha o dia exato no calendário para a consulta.</small>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold text-danger">Horário do Atendimento:</label>
+                                            <input type="time" id="inputHorarioClinica" name="horarioClinica" class="form-control form-control-lg border-danger" />
+                                            <small class="text-muted">Digite ou clique no relógio para definir a hora exata (ex: 14:15).</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-text text-muted mt-2 fs-6">
+                                    Filtro automático ativo para a especialidade:
+                                    <strong class="text-primary fs-5" th:text="${especialidadeSelecionada}">Modalidade</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-5 border-top pt-4">
+                        <a href="/agenda" class="btn btn-outline-secondary btn-lg px-4 fw-bold">⬅️ Cancelar e Voltar</a>
+                        <button type="submit" class="btn btn-success btn-lg px-5 shadow fw-bold">💾 CONCLUIR E GERAR CONTRATO</button>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const inputData = document.getElementById('dataNascimento');
+    const containerResp = document.getElementById('containerResponsavel');
+    const inputResp = document.getElementById('nomeResponsavel');
+
+    function verificarIdade() {
+        if (!inputData.value) return;
+        const dataNascimento = new Date(inputData.value);
+        const hoje = new Date();
+        let idade = hoje.getFullYear() - dataNascimento.getFullYear();
+        const mes = hoje.getMonth() - dataNascimento.getMonth();
+        if (mes < 0 || (mes === 0 && hoje.getDate() < dataNascimento.getDate())) { idade--; }
+        if (idade < 18) {
+            containerResp.style.display = 'block';
+            inputResp.required = true;
+        } else {
+            containerResp.style.display = 'none';
+            inputResp.required = false;
+            inputResp.value = '';
+        }
+    }
+    inputData.addEventListener('change', verificarIdade);
+
+    window.addEventListener('DOMContentLoaded', () => {
+        verificarIdade();
+
+        const esp = document.body.getAttribute('th:data-especialidade') || document.body.dataset.especialidade || "";
+        const espLower = esp.toLowerCase();
+
+        const divTurma = document.getElementById('divTurmaFixa');
+        const divClinica = document.getElementById('divAgendaClinica');
+
+        const selectHorarioTurma = document.getElementById('selectHorarioTurma');
+        const inputDataClinica = document.getElementById('inputDataClinica');
+        const inputHorarioClinica = document.getElementById('inputHorarioClinica');
+        const checkboxes = document.querySelectorAll('.check-dia-semana');
+
+        if (espLower.includes('psico') || espLower.includes('nutri') || espLower.includes('psicologia')) {
+            divTurma.style.display = 'none';
+            divClinica.style.display = 'block';
+
+            inputDataClinica.required = true;
+            inputHorarioClinica.required = true;
+
+            if (selectHorarioTurma) {
+                selectHorarioTurma.required = false;
+                selectHorarioTurma.removeAttribute('name');
+            }
+            checkboxes.forEach(cb => cb.removeAttribute('name'));
+        } else {
+            divTurma.style.display = 'block';
+            divClinica.style.display = 'none';
+
+            inputDataClinica.required = false;
+            inputHorarioClinica.required = false;
+            inputDataClinica.removeAttribute('name');
+            inputHorarioClinica.removeAttribute('name');
+
+            if (selectHorarioTurma) {
+                selectHorarioTurma.setAttribute('name', 'horarioTurma');
+                selectHorarioTurma.required = true;
+            }
+            checkboxes.forEach(cb => cb.setAttribute('name', 'diasSemanaSelecionados'));
+        }
+    });
+</script>
+</body>
+</html>

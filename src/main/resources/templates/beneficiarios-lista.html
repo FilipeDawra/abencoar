@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestão de Beneficiários - Projeto Abençoar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div th:replace="~{fragments/navigation :: header}"></div>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>👥 Gestão de Beneficiários</h2>
+        <a href="/agenda/gestao" class="btn btn-outline-secondary fw-bold">⬅️ Voltar para Agenda</a>
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-primary text-white fw-bold">🔎 Filtros de Busca</div>
+        <div class="card-body">
+            <form th:action="@{/beneficiarios/gestao}" method="get" class="row g-3">
+
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Nome do Beneficiário</label>
+                    <input type="text" id="filtroNome" name="nome" th:value="${nomeFiltro}"
+                           class="form-control" placeholder="Digite para buscar..." list="sugestoesNome" autocomplete="off">
+                    <datalist id="sugestoesNome"></datalist>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Filtrar por Rua</label>
+                    <input type="text" id="filtroRua" name="rua" th:value="${ruaFiltro}"
+                           class="form-control" placeholder="Nome da rua..." list="sugestoesRua" autocomplete="off">
+                    <datalist id="sugestoesRua"></datalist>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label fw-bold">Aniversariantes</label>
+                    <select name="mesAniversario" class="form-select">
+                        <option value="0">Selecione o mês...</option>
+                        <option value="1" th:selected="${mesFiltro == 1}">Janeiro</option>
+                        <option value="2" th:selected="${mesFiltro == 2}">Fevereiro</option>
+                        <option value="3" th:selected="${mesFiltro == 3}">Março</option>
+                        <option value="4" th:selected="${mesFiltro == 4}">Abril</option>
+                        <option value="5" th:selected="${mesFiltro == 5}">Maio</option>
+                        <option value="6" th:selected="${mesFiltro == 6}">Junho</option>
+                        <option value="7" th:selected="${mesFiltro == 7}">Julho</option>
+                        <option value="8" th:selected="${mesFiltro == 8}">Agosto</option>
+                        <option value="9" th:selected="${mesFiltro == 9}">Setembro</option>
+                        <option value="10" th:selected="${mesFiltro == 10}">Outubro</option>
+                        <option value="11" th:selected="${mesFiltro == 11}">Novembro</option>
+                        <option value="12" th:selected="${mesFiltro == 12}">Dezembro</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label fw-bold">Situação/Pagamento</label>
+                    <select name="status" class="form-select">
+                        <option value="">Todos</option>
+                        <option th:each="st : ${statusLista}" th:value="${st}" th:text="${st}"
+                                th:selected="${statusFiltro == st}"></option>
+                    </select>
+                </div>
+
+                <div class="col-md-2 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-success w-100 fw-bold">Filtrar</button>
+                    <a href="/beneficiarios/gestao" class="btn btn-secondary w-100 fw-bold">Limpar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="table-responsive bg-white rounded shadow-sm p-3">
+        <table class="table table-striped table-hover align-middle">
+            <thead class="table-dark">
+            <tr>
+                <th>Nome</th>
+                <th>CPF</th>
+                <th>Telefone</th>
+                <th>Endereço</th>
+                <th>Situação</th>
+                <th class="text-center">Ações</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="b : ${beneficiarios}">
+                <td th:text="${b.nome}" class="fw-bold">João da Silva</td>
+                <td th:text="${b.cpf != null ? b.cpf.numero : '-'}">-</td>
+                <td th:text="${b.telefone != null ? b.telefone.numero : '-'}">-</td>
+                <td th:text="${b.endereco}">Rua Principal, 123</td>
+                <td>
+                    <span th:text="${b.statusInadimplencia}"
+                          th:class="${b.statusInadimplencia.name() == 'EM_DIA' ? 'badge bg-success' : 'badge bg-danger'}">Status</span>
+                </td>
+                <td class="text-center">
+                    <a th:href="@{/beneficiarios/editar/{id}(id=${b.id})}" class="btn btn-sm btn-warning fw-bold">📝 Editar Ficha</a>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(beneficiarios)}">
+                <td colspan="6" class="text-center text-muted py-4">Nenhum beneficiário encontrado com os filtros aplicados.</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Configura o Autocomplete para o campo Nome
+    document.getElementById('filtroNome').addEventListener('input', function() {
+        let termo = this.value;
+        if(termo.length >= 2) { // Só busca se o usuário digitar 2 ou mais letras
+            fetch('/beneficiarios/autocomplete-nome?term=' + termo)
+                .then(response => response.json())
+                .then(dados => {
+                    let datalist = document.getElementById('sugestoesNome');
+                    datalist.innerHTML = ''; // Limpa as antigas
+                    dados.forEach(nome => {
+                        let option = document.createElement('option');
+                        option.value = nome;
+                        datalist.appendChild(option);
+                    });
+                });
+        }
+    });
+
+    // Configura o Autocomplete para o campo Rua
+    document.getElementById('filtroRua').addEventListener('input', function() {
+        let termo = this.value;
+        if(termo.length >= 2) {
+            fetch('/beneficiarios/autocomplete-rua?term=' + termo)
+                .then(response => response.json())
+                .then(dados => {
+                    let datalist = document.getElementById('sugestoesRua');
+                    datalist.innerHTML = '';
+                    dados.forEach(rua => {
+                        let option = document.createElement('option');
+                        option.value = rua;
+                        datalist.appendChild(option);
+                    });
+                });
+        }
+    });
+</script>
+</body>
+</html>
