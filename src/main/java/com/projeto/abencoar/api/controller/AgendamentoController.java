@@ -7,7 +7,6 @@ import com.projeto.abencoar.domain.service.AgendaService;
 import com.projeto.abencoar.domain.service.EspecialidadeService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.TypedQuery;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -82,7 +81,7 @@ public class AgendamentoController {
     // 3. 🔄 RETORNO AUTOMÁTICO APÓS SALVAR E GERAR CONTRATO (SISTEMA TOTALMENTE DINÂMICO)
     @PostMapping("/salvar-cadastro")
     public String salvarCadastro(
-            @RequestParam(value = "profissionalSelecionado", required = false) String profissionalSelecionado, // 🚀 ADICIONADO COM SUCESSO
+            @RequestParam(value = "profissionalSelecionado", required = false) String profesionalSelecionado,
             @RequestParam(value = "agendamentoId", required = false) String agendamentoIdStr,
             @RequestParam(value = "diasSemanaSelecionados", required = false) List<String> diasSemana,
             @RequestParam(value = "horarioTurma", required = false) String horarioTurma,
@@ -98,7 +97,6 @@ public class AgendamentoController {
             @RequestParam(value = "especialidadeSelecionada", required = false) String espNome,
             RedirectAttributes redirectAttributes) {
 
-        // 🚀 DECLARAÇÃO FORA DO TRY: Garante visibilidade para o return no final do método
         String matriculaParaRedirecionamento = "";
 
         try {
@@ -115,10 +113,9 @@ public class AgendamentoController {
             beneficiario.setEndereco(endereco);
             beneficiario.setNomeResponsavel(nomeResponsavel);
 
-            // Geramos uma matrícula provisória baseada em tempo para novos registros
             String matriculaGerada = "MAT" + (System.currentTimeMillis() % 1000000);
             beneficiario.setMatricula(matriculaGerada);
-            matriculaParaRedirecionamento = matriculaGerada; // Guardamos no escopo seguro
+            matriculaParaRedirecionamento = matriculaGerada;
 
             if (dataNascimentoStr != null && !dataNascimentoStr.isEmpty()) {
                 beneficiario.setDataNascimento(java.time.LocalDate.parse(dataNascimentoStr));
@@ -139,10 +136,7 @@ public class AgendamentoController {
                 }
 
                 agendamentoClinico.setRealizado(false);
-
-                // 🚀 ADICIONADO: Define o profissional selecionado na tela ou usa o fallback padrão se vier nulo
-                agendamentoClinico.setProfissional(profissionalSelecionado != null && !profissionalSelecionado.isEmpty() ? profissionalSelecionado : "Profissional Clínico");
-
+                agendamentoClinico.setProfissional(profesionalSelecionado != null && !profesionalSelecionado.isEmpty() ? profesionalSelecionado : "Profissional Clínico");
                 agendamentoClinico.setBeneficiario(beneficiario);
                 agendamentoClinico.setEspecialidade(especialidade);
 
@@ -163,10 +157,7 @@ public class AgendamentoController {
                     }
 
                     agendamentoGrupo.setRealizado(false);
-
-                    // 🚀 ADICIONADO: Define o profissional selecionado na tela ou usa o fallback padrão se vier nulo
-                    agendamentoGrupo.setProfissional(profissionalSelecionado != null && !profissionalSelecionado.isEmpty() ? profissionalSelecionado : "Prof. Grupo");
-
+                    agendamentoGrupo.setProfissional(profesionalSelecionado != null && !profesionalSelecionado.isEmpty() ? profesionalSelecionado : "Prof. Grupo");
                     agendamentoGrupo.setBeneficiario(beneficiario);
                     agendamentoGrupo.setEspecialidade(especialidade);
 
@@ -196,17 +187,15 @@ public class AgendamentoController {
 
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("mensagemErro", "❌ Erro ao processar: " + e.getMessage());
-            // Em caso de falha grave onde a matrícula sumiu, volta para a gestão segura
             if (matriculaParaRedirecionamento.isEmpty()) {
                 return "redirect:/agenda/gestao";
             }
         }
 
-        // 🚀 DESENCAPSULADO: Usa a variável do escopo correto para acionar o contrato de vez!
         return "redirect:/beneficiarios/contrato/" + matriculaParaRedirecionamento;
     }
 
-    // 4. 📋 PAINEL DE GESTÃO ESTRATÉGICA (Filtro direto por dados cadastrais, sem travar em horários)
+    // 4. 📋 PAINEL DE GESTÃO ESTRATÉGICA (Filtro via Java Streams - Totalmente Compatível com Postgres/Supabase)
     @GetMapping("/gestao")
     public String exibirGestao(
             @RequestParam(required = false) Long especialidadeId,
@@ -225,7 +214,6 @@ public class AgendamentoController {
         model.addAttribute("dataSelecionada", dataBusca);
         model.addAttribute("todosBeneficiarios", beneficiarioRepository.findAll());
 
-        // Carrega o nome da especialidade selecionada no dropdown para usar no filtro textual
         String nomeEspecialidadeFiltro = null;
         if (especialidadeId != null) {
             model.addAttribute("especialidadeIdSelecionada", especialidadeId);
@@ -238,7 +226,6 @@ public class AgendamentoController {
                 nomeEspecialidadeFiltro = esp.getNome();
             }
 
-            // 🚀 INJETADO COM SUCESSO: Carrega os profissionais ativos para a lixeira do HTML
             List<String> professoresCadastrados = gradeRepository.findAll().stream()
                     .filter(g -> g.getEspecialidade().getId().equals(especialidadeId)
                             && g.getProfissionalPadrao() != null
@@ -251,7 +238,6 @@ public class AgendamentoController {
             model.addAttribute("professoresCadastrados", professoresCadastrados);
         }
 
-        // Os horários da agenda do dia continuam funcionando em paralelo para a Miriam bater o olho
         if (especialidadeId != null) {
             model.addAttribute("agendamentos", agendamentoRepository.findAllByDataAndEspecialidadeIdOrderByHorarioAsc(dataBusca, especialidadeId));
         } else {
@@ -266,34 +252,35 @@ public class AgendamentoController {
                 || (especialidadeId != null);
 
         if (temBuscaAtiva) {
-            // 🚀 QUERY BLINDADA: Ignora maiúsculas, minúsculas e espaços extras no banco
-            StringBuilder jpql = new StringBuilder("SELECT b FROM Beneficiario b WHERE 1=1 ");
+            final String espFiltro = nomeEspecialidadeFiltro;
 
-            if (nomeEspecialidadeFiltro != null) {
-                // Usamos LOWER e TRIM para garantir o match mesmo se houver divergência de escrita
-                jpql.append("AND LOWER(TRIM(b.nomeResponsavel)) = LOWER(TRIM(:nomeEspecialidadeFiltro)) ");
-            }
-            if (nome != null && !nome.trim().isEmpty()) jpql.append("AND b.nome ILIKE :nome ");
-            if (rua != null && !rua.trim().isEmpty()) jpql.append("AND b.endereco ILIKE :rua ");
-            if (inadimplencia != null) jpql.append("AND b.statusInadimplencia = :inadimplencia ");
-            if (mesAniversario != null && mesAniversario != 0) jpql.append("AND MONTH(b.dataNascimento) = :mesAniversario ");
-            if (diaAniversario != null && diaAniversario != 0) jpql.append("AND DAY(b.dataNascimento) = :diaAniversario ");
+            // 🚀 FILTRO SEGURO EM MEMÓRIA: Evita funções de banco incompatíveis com PostgreSQL
+            List<Beneficiario> resultado = beneficiarioRepository.findAll().stream()
+                    .filter(b -> {
+                        if (espFiltro != null && b.getNomeResponsavel() != null) {
+                            if (!b.getNomeResponsavel().trim().equalsIgnoreCase(espFiltro.trim())) return false;
+                        }
+                        if (nome != null && !nome.trim().isEmpty()) {
+                            if (!b.getNome().toLowerCase().contains(nome.trim().toLowerCase())) return false;
+                        }
+                        if (rua != null && !rua.trim().isEmpty() && b.getEndereco() != null) {
+                            if (!b.getEndereco().toLowerCase().contains(rua.trim().toLowerCase())) return false;
+                        }
+                        if (inadimplencia != null) {
+                            if (b.getStatusInadimplencia() != inadimplencia) return false;
+                        }
+                        if (mesAniversario != null && mesAniversario != 0 && b.getDataNascimento() != null) {
+                            if (b.getDataNascimento().getMonthValue() != mesAniversario) return false;
+                        }
+                        if (diaAniversario != null && diaAniversario != 0 && b.getDataNascimento() != null) {
+                            if (b.getDataNascimento().getDayOfMonth() != diaAniversario) return false;
+                        }
+                        return true;
+                    })
+                    .sorted((b1, b2) -> b1.getNome().compareToIgnoreCase(b2.getNome()))
+                    .toList();
 
-            jpql.append("ORDER BY b.nome ASC");
-
-            TypedQuery<Beneficiario> query = entityManager.createQuery(jpql.toString(), Beneficiario.class);
-
-            if (nomeEspecialidadeFiltro != null) query.setParameter("nomeEspecialidadeFiltro", nomeEspecialidadeFiltro.trim());
-            if (nome != null && !nome.trim().isEmpty()) query.setParameter("nome", "%" + nome.trim() + "%");
-            if (rua != null && !rua.trim().isEmpty()) query.setParameter("rua", "%" + rua.trim() + "%");
-            if (inadimplencia != null) query.setParameter("inadimplencia", inadimplencia);
-            if (mesAniversario != null && mesAniversario != 0) query.setParameter("mesAniversario", mesAniversario);
-            if (diaAniversario != null && diaAniversario != 0) query.setParameter("diaAniversario", diaAniversario);
-
-            List<Beneficiario> resultado = query.getResultList();
-
-            // Log de sobrevivência para ver no console do IntelliJ o que está acontecendo
-            System.out.println(">>> [DEBUG GESTÃO] Filtro Especialidade: " + nomeEspecialidadeFiltro);
+            System.out.println(">>> [DEBUG GESTÃO] Filtro Especialidade: " + espFiltro);
             System.out.println(">>> [DEBUG GESTÃO] Quantidade de beneficiários encontrados: " + resultado.size());
 
             model.addAttribute("beneficiarios", resultado);
@@ -312,7 +299,6 @@ public class AgendamentoController {
         return "agenda-lista";
     }
 
-    // O SEU MÉTODO ATUAL CONTINUA AQUI... (preservado com sucesso)
     @PostMapping("/atualizar-profissional-slot")
     public String atualizarProfissionalSlot(
             @RequestParam("agendamentoId") Long agendamentoId,
@@ -340,7 +326,6 @@ public class AgendamentoController {
         return "redirect:/agenda/gestao" + (queryParams.isEmpty() ? "" : "?" + queryParams);
     }
 
-    // 🚀 NOVO ENDPOINT: Cadastra o profissional diretamente na Especialidade (Grade)
     @PostMapping("/cadastrar-profissional-especialidade")
     public String cadastrarProfissionalEspecialidade(
             @RequestParam("especialidadeId") Long especialidadeId,
@@ -380,7 +365,6 @@ public class AgendamentoController {
         return "redirect:/agenda/gestao?especialidadeId=" + especialidadeId + (dataFiltroStr != null && !dataFiltroStr.isEmpty() ? "&dataFiltro=" + dataFiltroStr : "");
     }
 
-    // 5. ⚡ VINCULAR EXISTENTE
     @PostMapping("/vincular-existente")
     public String vincularBeneficiarioExistente(
             @RequestParam("beneficiarioId") String matricula,
@@ -452,7 +436,6 @@ public class AgendamentoController {
         return "redirect:/agenda/gestao";
     }
 
-    // 6. ⚡ GERAR AGENDA EM LOTE (Ajustado para aceitar múltiplos dias e horários flexíveis)
     @PostMapping("/gerar-mensal")
     public String gerarAgendaDoMes(
             @RequestParam("especialidadeId") Long especialidadeId,
@@ -466,14 +449,10 @@ public class AgendamentoController {
         try {
             LocalTime horario = LocalTime.parse(horarioFixoStr);
 
-            // Aqui faremos a ponte com o seu AgendaService.
-            // Para não quebrar nada agora, vamos printar no console para ver se os dados chegam redondos!
             System.out.println(">>> [GERAÇÃO LOTE] Especialidade ID: " + especialidadeId);
             System.out.println(">>> [GERAÇÃO LOTE] Horário Escolhido: " + horario);
             System.out.println(">>> [GERAÇÃO LOTE] Dias da semana recebidos: " + diasSemana);
             System.out.println(">>> [GERAÇÃO LOTE] Data clínica específica: " + dataEspecificaStr);
-
-            // TODO: Ajustar a chamada do agendaService para absorver os novos parâmetros.
 
             redirectAttributes.addFlashAttribute("mensagemSucesso", "⚡ Parâmetros recebidos no servidor! Prontos para a modelagem do service.");
         } catch (Exception e) {
@@ -482,7 +461,6 @@ public class AgendamentoController {
         return "redirect:/agenda/gestao?especialidadeId=" + especialidadeId + (dataFiltroStr != null && !dataFiltroStr.isEmpty() ? "&dataFiltro=" + dataFiltroStr : "");
     }
 
-    // 7. ❌ EXCLUIR BENEFICIÁRIO
     @PostMapping("/excluir-beneficiario")
     public String excluirBeneficiario(@RequestParam("id") String matricula, RedirectAttributes redirectAttributes) {
         try {
@@ -501,7 +479,6 @@ public class AgendamentoController {
         return "redirect:/agenda/gestao";
     }
 
-    // 🖨️ LISTA DE PRESENÇA DINÂMICA FILTRADA
     @GetMapping("/imprimir-presenca")
     public String gerarListaPresenca(
             @RequestParam(value = "mapEspecialidadeId", required = false) Long mapEspecialidadeId,
@@ -540,7 +517,6 @@ public class AgendamentoController {
         return "lista-presenca-impressao";
     }
 
-    // 🚀 NOVO: Remove o vínculo do profissional com a especialidade (Grade e Slots vagos)
     @PostMapping("/excluir-profissional-especialidade")
     public String excluirProfissionalEspecialidade(
             @RequestParam("especialidadeId") Long especialidadeId,
