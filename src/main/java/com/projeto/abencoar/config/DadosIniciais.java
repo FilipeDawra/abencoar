@@ -1,20 +1,21 @@
 package com.projeto.abencoar.config;
 
 import com.projeto.abencoar.domain.model.*;
-import com.projeto.abencoar.domain.repository.*;
+import com.projeto.abencoar.domain.repository.AgendamentoRepository;
+import com.projeto.abencoar.domain.repository.BeneficiarioRepository;
+import com.projeto.abencoar.domain.repository.GradeHorariaRepository;
 import com.projeto.abencoar.domain.service.AgendaService;
 import com.projeto.abencoar.domain.service.EspecialidadeService;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.List;
 
-@Configuration
+//@Configuration
 @RequiredArgsConstructor
 public class DadosIniciais implements CommandLineRunner {
 
