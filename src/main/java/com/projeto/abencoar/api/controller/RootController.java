@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class RootController {
 
     @GetMapping("/")
-    public String redirecionarParaAgenda() {
-        // Quando alguém acessar o link puro, joga automaticamente para /agenda
-        return "redirect:/agenda";
+    public String redirecionarParaLogin() {
+        // Quando o Joel ou a Miriam digitarem o link limpo, caem direto no Login
+        return "redirect:/login";
     }
 }
