@@ -7,6 +7,7 @@ import com.projeto.abencoar.domain.service.AgendaService;
 import com.projeto.abencoar.domain.service.EspecialidadeService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -41,8 +42,12 @@ public class AgendamentoController {
     private EntityManager entityManager;
 
     // 1. 🎯 PÁGINA INICIAL ULTRA LIMPA: Apenas a triagem da modalidade
-    @GetMapping
-    public String exibirFormularioAgendamento(Model model) {
+    @GetMapping("/")
+    public String exibirFormularioAgendamento(Model model, HttpSession session) {
+        // Bloqueio de segurança simples
+        if (session.getAttribute("usuarioLogado") == null) {
+            return "redirect:/login";
+        }
         model.addAttribute("especialidades", BlackespecialidadeService.listarTodas());
         return "agenda-projeto";
     }
@@ -196,7 +201,7 @@ public class AgendamentoController {
     }
 
     // 4. 📋 PAINEL DE GESTÃO ESTRATÉGICA (Filtro via Java Streams - Totalmente Compatível com Postgres/Supabase)
-    @GetMapping("/gestao")
+    @GetMapping("/agenda/gestao")
     public String exibirGestao(
             @RequestParam(required = false) Long especialidadeId,
             @RequestParam(required = false) String nome,
@@ -205,8 +210,19 @@ public class AgendamentoController {
             @RequestParam(required = false) Integer mesAniversario,
             @RequestParam(required = false) Integer diaAniversario,
             @RequestParam(value = "dataFiltro", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFiltro,
-            Model model) {
+            Model model,
+            HttpSession session) { // 🚀 INJETADO AQUI
 
+        // 🔒 VERIFICAÇÃO DE PERFIL: Só entra ADMIN ou TI
+        Usuario logado = (Usuario) session.getAttribute("usuarioLogado");
+        if (logado == null) {
+            return "redirect:/login";
+        }
+
+        // Exemplo de bloqueio por nível: Se quiser blindar algo exclusivo para TI
+        // if (logado.getPerfil() != PerfilUsuario.ROLE_TI) { return "redirect:/agenda?erro=nao-autorizado"; }
+
+        model.addAttribute("usuarioNome", logado.getNome()); // Exibe o nome de quem logou na tela
         model.addAttribute("especialidades", BlackespecialidadeService.listarTodas());
         model.addAttribute("statusInadimplenciaOpcoes", StatusInadimplencia.values());
 
