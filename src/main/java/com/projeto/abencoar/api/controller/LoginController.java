@@ -32,6 +32,8 @@ public class LoginController {
             HttpSession session,
             Model model) {
 
+            System.out.println("DEBUG: O formulário chegou no Controller! Email: " + email);
+
         Usuario usuarioEncontrado = usuariosValidos.stream()
                 .filter(u -> u.getEmail().equalsIgnoreCase(email.trim()) && u.getSenha().equals(senha))
                 .findFirst()
@@ -40,6 +42,7 @@ public class LoginController {
         if (usuarioEncontrado != null) {
             session.setAttribute("usuarioLogado", usuarioEncontrado);
             return "redirect:/agenda"; // Logou com sucesso, vai direto pro painel
+
         }
 
         model.addAttribute("erro", "❌ Credenciais inválidas para o Projeto Abençoar!");
