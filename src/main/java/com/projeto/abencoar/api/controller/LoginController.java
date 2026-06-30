@@ -2,7 +2,9 @@ package com.projeto.abencoar.api.controller;
 
 import com.projeto.abencoar.domain.model.PerfilUsuario;
 import com.projeto.abencoar.domain.model.Usuario;
+import com.projeto.abencoar.domain.service.EspecialidadeService; // 🚀 Garanta que esse import aponta pro seu service correto
 import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,7 +14,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
 
 @Controller
+@RequiredArgsConstructor // 🧠 Traz a injeção automática de dependências pelo construtor (Lombok)
 public class LoginController {
+
+    // Injeta o seu serviço para carregar a listagem de especialidades na tela inicial
+    private final EspecialidadeService especialidadeService;
 
     // Usuários cadastrados manualmente para a entrega segura de amanhã
     private final List<Usuario> usuariosValidos = List.of(
@@ -22,7 +28,7 @@ public class LoginController {
 
     @GetMapping("/login")
     public String telaLogin() {
-        return "login"; // Vai procurar o arquivo login.html
+        return "login"; // Procura o arquivo login.html
     }
 
     @PostMapping("/login")
@@ -32,7 +38,7 @@ public class LoginController {
             HttpSession session,
             Model model) {
 
-            System.out.println("DEBUG: O formulário chegou no Controller! Email: " + email);
+        System.out.println("DEBUG: O formulário chegou no Controller! Email: " + email);
 
         Usuario usuarioEncontrado = usuariosValidos.stream()
                 .filter(u -> u.getEmail().equalsIgnoreCase(email.trim()) && u.getSenha().equals(senha))
@@ -41,8 +47,12 @@ public class LoginController {
 
         if (usuarioEncontrado != null) {
             session.setAttribute("usuarioLogado", usuarioEncontrado);
-            return "redirect:/agenda"; // Logou com sucesso, vai direto pro painel
 
+            // 🚀 SALTO TRIPLO PRODUTIVO: Alimentamos o Model com as especialidades que a página inicial exige
+            model.addAttribute("especialidades", especialidadeService.listarTodas());
+
+            // Renderiza direto o template HTML, saltando o problema do redirect do navegador!
+            return "agenda-projeto";
         }
 
         model.addAttribute("erro", "❌ Credenciais inválidas para o Projeto Abençoar!");
@@ -51,7 +61,7 @@ public class LoginController {
 
     @GetMapping("/logout")
     public String efetuarLogout(HttpSession session) {
-        session.invalidate(); // Destrói a sessão de segurança
+        session.invalidate(); // Destrói os dados da sessão de segurança
         return "redirect:/login";
     }
 }
