@@ -39,7 +39,7 @@ public class LoginController {
 
         if (usuarioEncontrado != null) {
             session.setAttribute("usuarioLogado", usuarioEncontrado);
-            return "redirect:/agenda/gestao"; // Logou com sucesso, vai direto pro painel
+            return "redirect:/agenda"; // Logou com sucesso, vai direto pro painel
         }
 
         model.addAttribute("erro", "❌ Credenciais inválidas para o Projeto Abençoar!");
