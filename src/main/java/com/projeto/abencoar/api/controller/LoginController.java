@@ -32,7 +32,7 @@ public class LoginController {
     }
 
     @PostMapping("/login")
-    public String efetuarLogin(
+    public String efectuarLogin(
             @RequestParam("email") String email,
             @RequestParam("senha") String senha,
             HttpSession session,
@@ -48,7 +48,7 @@ public class LoginController {
         if (usuarioEncontrado != null) {
             session.setAttribute("usuarioLogado", usuarioEncontrado);
 
-            // 🚀 REDIRECIONAMENTO LIMPO: Força o navegador a ir para a rota oficial do AgendamentoController
+            // 🚀 REDIRECIONAMENTO LIMPO E ALINHADO COM O CONTROLLER
             return "redirect:/agenda";
         }
 

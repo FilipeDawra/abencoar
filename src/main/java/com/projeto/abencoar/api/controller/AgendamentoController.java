@@ -42,7 +42,7 @@ public class AgendamentoController {
     private EntityManager entityManager;
 
     // 1. 🎯 PÁGINA INICIAL ULTRA LIMPA: Apenas a triagem da modalidade
-    @GetMapping("/")
+    @GetMapping
     public String exibirFormularioAgendamento(Model model, HttpSession session) {
        /* // Bloqueio de segurança simples
         if (session.getAttribute("usuarioLogado") == null) {
