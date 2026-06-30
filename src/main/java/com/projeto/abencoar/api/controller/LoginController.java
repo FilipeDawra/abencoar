@@ -48,11 +48,8 @@ public class LoginController {
         if (usuarioEncontrado != null) {
             session.setAttribute("usuarioLogado", usuarioEncontrado);
 
-            // 🚀 SALTO TRIPLO PRODUTIVO: Alimentamos o Model com as especialidades que a página inicial exige
-            model.addAttribute("especialidades", especialidadeService.listarTodas());
-
-            // Renderiza direto o template HTML, saltando o problema do redirect do navegador!
-            return "agenda-projeto";
+            // 🚀 REDIRECIONAMENTO LIMPO: Força o navegador a ir para a rota oficial do AgendamentoController
+            return "redirect:/agenda";
         }
 
         model.addAttribute("erro", "❌ Credenciais inválidas para o Projeto Abençoar!");
