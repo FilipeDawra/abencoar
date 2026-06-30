@@ -201,7 +201,7 @@ public class AgendamentoController {
     }
 
     // 4. 📋 PAINEL DE GESTÃO ESTRATÉGICA (Filtro via Java Streams - Totalmente Compatível com Postgres/Supabase)
-    @GetMapping("/agenda/gestao")
+    @GetMapping("/gestao")
     public String exibirGestao(
             @RequestParam(required = false) Long especialidadeId,
             @RequestParam(required = false) String nome,
