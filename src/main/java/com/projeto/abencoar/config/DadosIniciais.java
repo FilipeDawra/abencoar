@@ -9,14 +9,14 @@ import com.projeto.abencoar.domain.service.EspecialidadeService;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.List;
 
-@Configuration
+@Component
 @RequiredArgsConstructor
 public class DadosIniciais implements CommandLineRunner {
 
@@ -30,6 +30,7 @@ public class DadosIniciais implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
+        System.out.println("====== [DEBUG] CLASSE DADOS INICIAIS INICIALIZADA PELO SPRING ======");
 
         // 1. Carga do Beneficiário de Teste
         if (beneficiarioRepository.count() == 0) {
