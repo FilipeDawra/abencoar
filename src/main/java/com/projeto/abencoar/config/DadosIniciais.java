@@ -9,13 +9,14 @@ import com.projeto.abencoar.domain.service.EspecialidadeService;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.List;
 
-//@Configuration
+@Configuration
 @RequiredArgsConstructor
 public class DadosIniciais implements CommandLineRunner {
 
