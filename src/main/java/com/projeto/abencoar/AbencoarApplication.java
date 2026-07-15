@@ -13,6 +13,7 @@ public class AbencoarApplication {
 		SpringApplication.run(AbencoarApplication.class, args);
 	}
 	@Bean
+	@org.springframework.core.annotation.Order(2)
 	public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
 		return args -> {
 			System.out.println(">>> LISTANDO TODOS OS BEANS DO SPRING:");
