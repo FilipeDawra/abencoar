@@ -254,17 +254,17 @@ public class AgendamentoController {
             model.addAttribute("professoresCadastrados", professoresCadastrados);
         }
 
-        // Substitua a busca engessada por esta lógica flexível:
+        // 🚀 CORREÇÃO: A grade de horários só aparece se uma data específica for selecionada
         if (especialidadeId != null) {
             if (dataFiltro != null) {
-                // Se o usuário escolheu um dia específico no calendário, filtra por data
+                // Se o usuário escolheu um dia específico no calendário, traz os horários daquele dia
                 model.addAttribute("agendamentos", agendamentoRepository.findAllByDataAndEspecialidadeIdOrderByHorarioAsc(dataFiltro, especialidadeId));
             } else {
-                // Se não escolheu data, traz todos os horários daquela especialidade independentemente do dia!
-                model.addAttribute("agendamentos", agendamentoRepository.findByEspecialidadeIdAndBeneficiarioIsNull(especialidadeId));
+                // Se não escolheu data, deixa a grade limpa (evita a lista gigante de slots do mês todo)
+                model.addAttribute("agendamentos", java.util.List.of());
             }
         } else {
-            model.addAttribute("agendamentos", List.of());
+            model.addAttribute("agendamentos", java.util.List.of());
         }
 
         boolean temBuscaAtiva = (nome != null && !nome.trim().isEmpty())
