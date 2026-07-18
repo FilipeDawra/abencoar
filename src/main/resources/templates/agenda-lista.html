@@ -206,11 +206,12 @@
                         <tr th:each="a : ${agendamentos}">
                             <td class="fw-bold text-dark" th:text="${a.horario}">08:00</td>
                             <td>
+                                <!-- 🚀 CORREÇÃO DA LINHA 213 (De a.professional para a.profissional) -->
                                 <form th:action="@{/agenda/atualizar-professional-slot}" method="post" class="m-0 d-flex align-items-center gap-1">
                                     <input type="hidden" name="agendamentoId" th:value="${a.id}" />
                                     <input type="hidden" name="especialidadeId" th:value="${especialidadeIdSelecionada}" />
                                     <input type="hidden" name="dataFiltro" th:value="${dataSelecionada}" />
-                                    <input type="text" name="novoProfissional" th:value="${a.professional}"
+                                    <input type="text" name="novoProfissional" th:value="${a.profissional}"
                                            class="form-control form-control-sm border-0 bg-transparent fw-bold text-secondary text-truncate p-1"
                                            style="box-shadow: none;"
                                            placeholder="Definir profissional..."
