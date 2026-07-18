@@ -254,8 +254,15 @@ public class AgendamentoController {
             model.addAttribute("professoresCadastrados", professoresCadastrados);
         }
 
+        // Substitua a busca engessada por esta lógica flexível:
         if (especialidadeId != null) {
-            model.addAttribute("agendamentos", agendamentoRepository.findAllByDataAndEspecialidadeIdOrderByHorarioAsc(dataBusca, especialidadeId));
+            if (dataFiltro != null) {
+                // Se o usuário escolheu um dia específico no calendário, filtra por data
+                model.addAttribute("agendamentos", agendamentoRepository.findAllByDataAndEspecialidadeIdOrderByHorarioAsc(dataFiltro, especialidadeId));
+            } else {
+                // Se não escolheu data, traz todos os horários daquela especialidade independentemente do dia!
+                model.addAttribute("agendamentos", agendamentoRepository.findByEspecialidadeIdAndBeneficiarioIsNull(especialidadeId));
+            }
         } else {
             model.addAttribute("agendamentos", List.of());
         }
@@ -273,8 +280,15 @@ public class AgendamentoController {
             // 🚀 FILTRO SEGURO EM MEMÓRIA: Evita funções de banco incompatíveis com PostgreSQL
             List<Beneficiario> resultado = beneficiarioRepository.findAll().stream()
                     .filter(b -> {
-                        if (espFiltro != null && b.getNomeResponsavel() != null) {
-                            if (!b.getNomeResponsavel().trim().equalsIgnoreCase(espFiltro.trim())) return false;
+                        // 🚀 CORREÇÃO DEFINITIVA: Filtra o beneficiário se ele tiver a especialidade em QUALQUER dia ou hora
+                        if (espFiltro != null) {
+                            boolean temAgendamentoNaEspecialidade = agendamentoRepository.findAll().stream()
+                                    .anyMatch(a -> a.getBeneficiario() != null
+                                            && a.getBeneficiario().getMatricula().equals(b.getMatricula())
+                                            && a.getEspecialidade() != null
+                                            && a.getEspecialidade().getNome().trim().equalsIgnoreCase(espFiltro.trim()));
+
+                            if (!temAgendamentoNaEspecialidade) return false;
                         }
                         if (nome != null && !nome.trim().isEmpty()) {
                             if (!b.getNome().toLowerCase().contains(nome.trim().toLowerCase())) return false;

@@ -119,7 +119,8 @@ public class AbencoarApplication {
 
 					if (filipe != null) {
 						primeiro.setBeneficiario(filipe);
-						agendamentoRepository.saveAndFlush(primeiro);
+						// 🚀 Trocado de saveAndFlush para save comum
+						agendamentoRepository.save(primeiro);
 						System.out.println(">>> SUCESSO COMPROVADO: Filipe Engenheiro agendado para " + primeiro.getData());
 					}
 				}
