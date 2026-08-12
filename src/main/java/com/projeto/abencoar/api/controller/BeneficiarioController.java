@@ -22,42 +22,56 @@ public class BeneficiarioController {
     // ✏️ 1. ROTA EDITAR FICHA (Corrigido para String/Matrícula)
     @GetMapping("/editar/{id}")
     public String editarBeneficiario(@PathVariable String id, Model model) {
-        // Agora o findById aceita a String da matrícula perfeitamente!
-        Beneficiario beneficiario = beneficiarioRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Beneficiário inválido: " + id));
+        String matriculaBusca = (id != null) ? id.trim() : "";
+
+        Beneficiario beneficiario = beneficiarioRepository.findById(matriculaBusca)
+                .orElse(null);
+
+        if (beneficiario == null) {
+            return "redirect:/beneficiarios/gestao?erro=nao_encontrado";
+        }
 
         // 🛡️ PROTEÇÃO ESSENCIAL: Evita que o Thymeleaf dê erro se o telefone estiver nulo no banco
         if (beneficiario.getTelefone() == null) {
-            beneficiario.setTelefone(new Telefone());
+            beneficiario.setTelefone(new Telefone(""));
         }
 
         model.addAttribute("beneficiario", beneficiario);
         return "beneficiario-form";
     }
 
-    // 💾 2. SALVAR/ATUALIZAR CADASTRO (Com Log de Controle e Redirecionamento Protegido)
+    // 💾 2. SALVAR/ATUALIZAR CADASTRO (Com Higienização, Log e Redirecionamento Protegido)
     @PostMapping("/salvar-detalhes")
     public String salvar(@ModelAttribute("beneficiario") Beneficiario b) {
-        // 🔍 LOGS DE CONTROLE - Verifique o console do IntelliJ ao clicar em Salvar
+        // 🧹 HIGIENIZAÇÃO DE DADOS (Sanitization) antes de persistir
+        if (b.getCpf() != null && b.getCpf().getNumero() != null) {
+            String cpfLimpo = b.getCpf().getNumero().replaceAll("\\D", "");
+            b.setCpf(new Cpf(cpfLimpo));
+        }
+
+        if (b.getTelefone() != null && b.getTelefone().getNumero() != null) {
+            String telefoneLimpo = b.getTelefone().getNumero().replaceAll("\\D", "");
+            b.setTelefone(new Telefone(telefoneLimpo));
+        }
+
+        // 🔍 LOGS DE CONTROLE
         System.out.println("=========================================");
         System.out.println(">>> RECEBIDO DO FORMULÁRIO:");
         System.out.println(">>> Matrícula: " + b.getMatricula());
         System.out.println(">>> Nome: " + b.getNome());
         System.out.println("=========================================");
 
-        // O Spring JPA salva ou atualiza o beneficiário usando a matrícula textual
+        // Salva ou atualiza no banco
         Beneficiario salvo = beneficiarioRepository.save(b);
 
-        // 🛡️ PROTEÇÃO DE FLUXO: Se a matrícula veio vazia ou nula por erro do HTML,
-        // redireciona para a listagem para não quebrar a aplicação com erro 500 ou 404
         if (salvo.getMatricula() == null || salvo.getMatricula().isBlank()) {
             System.out.println("⚠️ ALERTA: Matrícula retornou nula após o save. Redirecionando para a gestão.");
             return "redirect:/beneficiarios/gestao?sucesso=true";
         }
 
-        // Se a matrícula estiver perfeita, exibe o contrato na hora!
-        System.out.println("🚀 SUCESSO: Redirecionando para o contrato da matrícula: " + salvo.getMatricula());
-        return "redirect:/beneficiarios/contrato/" + salvo.getMatricula();
+        String matriculaLimpa = salvo.getMatricula().trim();
+        System.out.println("🚀 SUCESSO: Redirecionando para o contrato da matrícula: " + matriculaLimpa);
+        return "redirect:/beneficiarios/contrato/" + matriculaLimpa;
     }
 
     // 🔍 3. Rota para o Autocomplete de Nome
@@ -118,13 +132,24 @@ public class BeneficiarioController {
         return "beneficiarios-lista";
     }
 
-    // 📄 6. GERADOR DE CONTRATO EM A4 (Corrigido para String/Matrícula e Blindado contra Nulos)
+    // 📄 6. GERADOR DE CONTRATO EM A4 (Tratado contra erros e exceções)
     @GetMapping("/contrato/{id}")
     public String gerarContrato(@PathVariable("id") String id, Model model) {
-        Beneficiario beneficiario = beneficiarioRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Beneficiário inválido: " + id));
 
-        // 🛡️ SEGURO PARA TESTES: Passando string vazia para os construtores que exigem argumentos
+        // 🧹 1. Remove espaços invisíveis nas pontas da matrícula (ex: "MAT66843 ")
+        String matriculaBusca = (id != null) ? id.trim() : "";
+
+        // 🔍 2. Busca usando a variável LIMPA e retorna null em vez de estourar Exceção
+        Beneficiario beneficiario = beneficiarioRepository.findById(matriculaBusca)
+                .orElse(null);
+
+        // 🛡️ 3. Se o banco não encontrar o registro, redireciona em segurança
+        if (beneficiario == null) {
+            System.out.println("⚠️ ALERTA: Beneficiário com matrícula [" + matriculaBusca + "] não foi localizado no banco.");
+            return "redirect:/beneficiarios/gestao?erro=nao_encontrado";
+        }
+
+        // 🛡️ 4. Blindagens contra atributos nulos
         if (beneficiario.getTelefone() == null) {
             beneficiario.setTelefone(new Telefone(""));
         }
@@ -133,7 +158,6 @@ public class BeneficiarioController {
             beneficiario.setCpf(new Cpf(""));
         }
 
-        // 🛡️ SEGURO PARA TESTES: Se a data de nascimento for nula, define a de hoje para não quebrar a formatação do Thymeleaf
         if (beneficiario.getDataNascimento() == null) {
             beneficiario.setDataNascimento(java.time.LocalDate.now());
         }
