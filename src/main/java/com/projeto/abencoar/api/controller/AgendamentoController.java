@@ -120,14 +120,17 @@ public class AgendamentoController {
 
             String matriculaGerada = "MAT" + (System.currentTimeMillis() % 1000000);
             beneficiario.setMatricula(matriculaGerada);
-            matriculaParaRedirecionamento = matriculaGerada;
 
             if (dataNascimentoStr != null && !dataNascimentoStr.isEmpty()) {
                 beneficiario.setDataNascimento(java.time.LocalDate.parse(dataNascimentoStr));
             }
 
-            beneficiario.setCpf(new Cpf(cpfInput));
-            beneficiario.setTelefone(new Telefone(telefoneInput));
+            // 🧹 HIGIENIZAÇÃO DE DADOS (Sanitization): Remove pontos, traços, espaços e parênteses
+            String cpfLimpo = (cpfInput != null) ? cpfInput.replaceAll("\\D", "") : "";
+            String telefoneLimpo = (telefoneInput != null) ? telefoneInput.replaceAll("\\D", "") : "";
+
+            beneficiario.setCpf(new Cpf(cpfLimpo));
+            beneficiario.setTelefone(new Telefone(telefoneLimpo));
 
             // FLUXO A: MUNDO CLÍNICO INDIVIDUAL
             if (dataClinicaStr != null && !dataClinicaStr.isEmpty()) {
@@ -188,13 +191,14 @@ public class AgendamentoController {
                 throw new IllegalArgumentException("Nenhum horário, dia da semana ou agendamento foi selecionado.");
             }
 
+            // 🎯 SÓ ATRIBUI A MATRÍCULA SE TODAS AS OPERAÇÕES DE BANCO TIVEREM SUCESSO!
+            matriculaParaRedirecionamento = matriculaGerada;
             redirectAttributes.addFlashAttribute("mensagemSucesso", "🎉 Beneficiário matriculado e horários dinâmicos reservados com sucesso!");
 
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("mensagemErro", "❌ Erro ao processar: " + e.getMessage());
-            if (matriculaParaRedirecionamento.isEmpty()) {
-                return "redirect:/agenda/gestao";
-            }
+            // Se deu erro em qualquer lugar do try, volta para a gestão e NÃO tenta abrir o contrato de um beneficiario não gravado
+            return "redirect:/agenda/gestao";
         }
 
         return "redirect:/beneficiarios/contrato/" + matriculaParaRedirecionamento;
