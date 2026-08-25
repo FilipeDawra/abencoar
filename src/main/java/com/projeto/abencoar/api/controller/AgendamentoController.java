@@ -520,37 +520,45 @@ public class AgendamentoController {
             @RequestParam(value = "dataFiltro", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFiltro,
             Model model) {
 
-        LocalDate dataAlvo = (dataFiltro != null) ? dataFiltro : LocalDate.now();
-        model.addAttribute("dataFiltro", dataAlvo);
-
+        // Resolve o nome da especialidade via ID ou parâmetro de Nome
         String nomeBusca = especialidadeNome;
-        if ((nomeBusca == null || nomeBusca.isEmpty()) && mapEspecialidadeId != null) {
+        if ((nomeBusca == null || nomeBusca.isBlank()) && mapEspecialidadeId != null) {
             nomeBusca = BlackespecialidadeService.listarTodas().stream()
                     .filter(e -> e.getId().equals(mapEspecialidadeId))
                     .map(Especialidade::getNome)
                     .findFirst().orElse(null);
         }
 
-        if (nomeBusca != null && !nomeBusca.isEmpty()) {
-            final String nomeFinal = nomeBusca;
+        if (nomeBusca != null && !nomeBusca.isBlank()) {
+            final String nomeFinal = nomeBusca.trim();
+
+            // Traz todos os agendamentos vinculados a essa especialidade e com beneficiário associado
             List<Agendamento> listaPresenca = agendamentoRepository.findAll().stream()
-                    .filter(a -> a.getData().equals(dataAlvo)
-                            && a.getBeneficiario() != null
-                            && a.getEspecialidade().getNome().equalsIgnoreCase(nomeFinal))
+                    .filter(a -> a.getBeneficiario() != null
+                            && a.getEspecialidade() != null
+                            && a.getEspecialidade().getNome().trim().equalsIgnoreCase(nomeFinal))
+                    .filter(a -> dataFiltro == null || a.getData().equals(dataFiltro))
+                    .sorted((a1, a2) -> {
+                        int compNome = a1.getBeneficiario().getNome().compareToIgnoreCase(a2.getBeneficiario().getNome());
+                        if (compNome != 0) return compNome;
+                        return a1.getHorario() != null && a2.getHorario() != null ? a1.getHorario().compareTo(a2.getHorario()) : 0;
+                    })
                     .toList();
 
             model.addAttribute("agendamentos", listaPresenca);
 
             BlackespecialidadeService.listarTodas().stream()
-                    .filter(e -> e.getNome().equalsIgnoreCase(nomeFinal))
-                    .findFirst().ifPresent(esp -> model.addAttribute("especialidade", esp));
+                    .filter(e -> e.getNome().trim().equalsIgnoreCase(nomeFinal))
+                    .findFirst()
+                    .ifPresent(esp -> model.addAttribute("especialidade", esp));
         } else {
             model.addAttribute("agendamentos", List.of());
         }
 
+        model.addAttribute("dataFiltro", dataFiltro != null ? dataFiltro : LocalDate.now());
+
         return "lista-presenca-impressao";
     }
-
     @PostMapping("/excluir-profissional-especialidade")
     public String excluirProfissionalEspecialidade(
             @RequestParam("especialidadeId") Long especialidadeId,
