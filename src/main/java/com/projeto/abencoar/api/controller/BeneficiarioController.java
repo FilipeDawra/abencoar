@@ -166,4 +166,31 @@ public class BeneficiarioController {
 
         return "beneficiario-contrato-impressao";
     }
+
+    // 🖨️ 7. GERADOR DE LISTA DE PRESENÇA / CHAMADA POR ESPECIALIDADE
+    @GetMapping("/impressao-chamada")
+    public String imprimirListaChamada(
+            @RequestParam(value = "especialidade", required = false) String especialidade,
+            @RequestParam(value = "unidade", required = false, defaultValue = "Cascata") String unidade,
+            Model model) {
+
+        String especialidadeBusca = (especialidade != null && !especialidade.isBlank()) ? especialidade.trim() : null;
+
+        // Busca os beneficiários aplicando o filtro de especialidade
+        List<Beneficiario> listaBeneficiarios = beneficiarioRepository.buscarBeneficiariosComFiltrosAvancados(
+                null, // nome
+                null, // rua
+                null, // status
+                null, // mesAniversario
+                null, // diaAniversario
+                especialidadeBusca
+        );
+
+        // Preenche as variáveis que o HTML da lista de chamada exige
+        model.addAttribute("agendamentos", listaBeneficiarios); // <--- Casando com o th:each="${agendamentos}"
+        model.addAttribute("especialidade", especialidadeBusca != null ? especialidadeBusca : "Todas");
+        model.addAttribute("unidade", unidade);
+
+        return "lista-de-chamada"; // Nome exato do seu arquivo HTML de impressão
+    }
 }
