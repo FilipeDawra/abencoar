@@ -81,24 +81,24 @@
     </tr>
     </thead>
     <tbody>
-    <!-- Iterando diretamente sobre a lista de beneficiários -->
-    <tr th:each="b : ${agendamentos}">
-        <!-- Horário padrão/simulado (caso não tenha entidade Agendamento no banco) -->
-        <td>-</td>
+    <tr th:each="agendamento : ${agendamentos}">
+        <!-- Horário da Turma -->
+        <td th:text="${agendamento.horario != null ? agendamento.horario : '-'}">08:00</td>
 
-        <!-- Dia padrão/simulado -->
-        <td>-</td>
+        <!-- Dia da Semana -->
+        <td th:text="${agendamento.data != null ? #temporals.format(agendamento.data, 'EEEE', #locale.forLanguageTag('pt-BR')) : '-'}">Segunda-feira</td>
 
-        <!-- Nome do Beneficiário -->
-        <td th:text="${b.nome != null ? b.nome : 'SEM NOME'}">João da Silva</td>
+        <!-- Nome do Beneficiário (Navegação através de agendamento.beneficiario) -->
+        <td th:text="${agendamento.beneficiario != null ? agendamento.beneficiario.nome : 'HORÁRIO VAGO'}"
+            th:style="${agendamento.beneficiario == null ? 'color: red; font-weight: bold;' : ''}">João da Silva</td>
 
         <!-- CPF -->
-        <td th:text="${b.cpf != null ? b.cpf.numero : '-'}">-</td>
+        <td th:text="${agendamento.beneficiario != null and agendamento.beneficiario.cpf != null ? agendamento.beneficiario.cpf.numero : '-'}">-</td>
 
         <!-- Telefone -->
-        <td th:text="${b.telefone != null ? b.telefone.numero : '-'}">-</td>
+        <td th:text="${agendamento.beneficiario != null and agendamento.beneficiario.telefone != null ? agendamento.beneficiario.telefone.numero : '-'}">-</td>
 
-        <!-- Caixas de visto manual para impressão -->
+        <!-- Colunas de visto em branco para chamada -->
         <td class="col-visto"><span class="checkbox-placeholder"></span></td>
         <td class="col-visto"><span class="checkbox-placeholder"></span></td>
         <td class="col-visto"><span class="checkbox-placeholder"></span></td>
