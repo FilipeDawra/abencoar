@@ -355,7 +355,7 @@
     <div class="d-flex justify-content-between mt-5 border-top pt-4">
         <a href="/agenda" class="btn btn-secondary btn-custom-link text-white">⬅️ Recepção (Triagem)</a>
 
-        <a th:href="@{/agenda/imprimir-presenca(mapEspecialidadeId=${especialidadeIdSelecionada}, especialidadeNome=${especialidadeSelecionada?.nome}, dataFiltro=${#temporals.format(dataSelecionada, 'yyyy-MM-dd')})}"
+        <a th:href="@{/agenda/imprimir-presenca(mapEspecialidadeId=${especialidadeIdSelecionada}, especialidadeNome=${especialidadeSelecionada?.nome})}"
            target="_blank"
            class="btn btn-success btn-custom-link text-white"
            th:classappend="${especialidadeIdSelecionada == null} ? 'disabled'">

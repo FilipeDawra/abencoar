@@ -517,10 +517,11 @@ public class AgendamentoController {
     public String gerarListaPresenca(
             @RequestParam(value = "mapEspecialidadeId", required = false) Long mapEspecialidadeId,
             @RequestParam(value = "especialidadeNome", required = false) String especialidadeNome,
+            @RequestParam(value = "horario", required = false) String horarioStr,
             @RequestParam(value = "dataFiltro", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFiltro,
             Model model) {
 
-        // Resolve o nome da especialidade via ID ou parâmetro de Nome
+        // 1. Identifica a especialidade por ID ou Nome
         String nomeBusca = especialidadeNome;
         if ((nomeBusca == null || nomeBusca.isBlank()) && mapEspecialidadeId != null) {
             nomeBusca = BlackespecialidadeService.listarTodas().stream()
@@ -532,16 +533,38 @@ public class AgendamentoController {
         if (nomeBusca != null && !nomeBusca.isBlank()) {
             final String nomeFinal = nomeBusca.trim();
 
-            // Traz todos os agendamentos vinculados a essa especialidade e com beneficiário associado
-            List<Agendamento> listaPresenca = agendamentoRepository.findAll().stream()
+            // 2. Traz todos os agendamentos da modalidade com aluno vinculado
+            List<Agendamento> agendamentosFiltrados = agendamentoRepository.findAll().stream()
                     .filter(a -> a.getBeneficiario() != null
                             && a.getEspecialidade() != null
                             && a.getEspecialidade().getNome().trim().equalsIgnoreCase(nomeFinal))
-                    .filter(a -> dataFiltro == null || a.getData().equals(dataFiltro))
+                    .filter(a -> {
+                        // Filtro opcional caso queira imprimir um horário específico
+                        if (horarioStr != null && !horarioStr.isBlank()) {
+                            return a.getHorario() != null && a.getHorario().toString().startsWith(horarioStr.trim());
+                        }
+                        return true;
+                    })
+                    .toList();
+
+            // 3. Remove duplicidades de cadastros repetidos do mesmo aluno na mesma turma
+            java.util.Map<String, Agendamento> alunosUnicos = new java.util.LinkedHashMap<>();
+            for (Agendamento a : agendamentosFiltrados) {
+                String horaFormatada = (a.getHorario() != null) ? a.getHorario().toString() : "00:00";
+                String chaveUnica = a.getBeneficiario().getMatricula() + "_" + horaFormatada;
+                if (!alunosUnicos.containsKey(chaveUnica)) {
+                    alunosUnicos.put(chaveUnica, a);
+                }
+            }
+
+            // 4. Ordena por Horário e depois por Nome do Aluno
+            List<Agendamento> listaPresenca = alunosUnicos.values().stream()
                     .sorted((a1, a2) -> {
-                        int compNome = a1.getBeneficiario().getNome().compareToIgnoreCase(a2.getBeneficiario().getNome());
-                        if (compNome != 0) return compNome;
-                        return a1.getHorario() != null && a2.getHorario() != null ? a1.getHorario().compareTo(a2.getHorario()) : 0;
+                        if (a1.getHorario() != null && a2.getHorario() != null) {
+                            int compHorario = a1.getHorario().compareTo(a2.getHorario());
+                            if (compHorario != 0) return compHorario;
+                        }
+                        return a1.getBeneficiario().getNome().compareToIgnoreCase(a2.getBeneficiario().getNome());
                     })
                     .toList();
 
