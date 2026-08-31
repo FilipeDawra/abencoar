@@ -517,11 +517,10 @@ public class AgendamentoController {
     public String gerarListaPresenca(
             @RequestParam(value = "mapEspecialidadeId", required = false) Long mapEspecialidadeId,
             @RequestParam(value = "especialidadeNome", required = false) String especialidadeNome,
-            @RequestParam(value = "horario", required = false) String horarioStr,
             @RequestParam(value = "dataFiltro", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFiltro,
             Model model) {
 
-        // 1. Identifica a especialidade por ID ou Nome
+        // 1. Identifica o nome da especialidade via ID ou Nome
         String nomeBusca = especialidadeNome;
         if ((nomeBusca == null || nomeBusca.isBlank()) && mapEspecialidadeId != null) {
             nomeBusca = BlackespecialidadeService.listarTodas().stream()
@@ -533,40 +532,32 @@ public class AgendamentoController {
         if (nomeBusca != null && !nomeBusca.isBlank()) {
             final String nomeFinal = nomeBusca.trim();
 
-            // 2. Traz todos os agendamentos da modalidade com aluno vinculado
-            List<Agendamento> agendamentosFiltrados = agendamentoRepository.findAll().stream()
+            // 2. Busca TODOS os agendamentos que pertençam a esta modalidade e possuam aluno
+            // SEM RESTRIÇÃO DE DATA para evitar zerar com agendamentos de meses anteriores
+            List<Agendamento> todosDaModalidade = agendamentoRepository.findAll().stream()
                     .filter(a -> a.getBeneficiario() != null
                             && a.getEspecialidade() != null
                             && a.getEspecialidade().getNome().trim().equalsIgnoreCase(nomeFinal))
-                    .filter(a -> {
-                        // Filtro opcional caso queira imprimir um horário específico
-                        if (horarioStr != null && !horarioStr.isBlank()) {
-                            return a.getHorario() != null && a.getHorario().toString().startsWith(horarioStr.trim());
-                        }
-                        return true;
-                    })
                     .toList();
 
-            // 3. Remove duplicidades de cadastros repetidos do mesmo aluno na mesma turma
+            // 3. Remove duplicidades: Garante apenas 1 registro por aluno/matrícula na chamada
             java.util.Map<String, Agendamento> alunosUnicos = new java.util.LinkedHashMap<>();
-            for (Agendamento a : agendamentosFiltrados) {
-                String horaFormatada = (a.getHorario() != null) ? a.getHorario().toString() : "00:00";
-                String chaveUnica = a.getBeneficiario().getMatricula() + "_" + horaFormatada;
-                if (!alunosUnicos.containsKey(chaveUnica)) {
-                    alunosUnicos.put(chaveUnica, a);
+            for (Agendamento a : todosDaModalidade) {
+                String matricula = a.getBeneficiario().getMatricula();
+                if (!alunosUnicos.containsKey(matricula)) {
+                    alunosUnicos.put(matricula, a);
                 }
             }
 
-            // 4. Ordena por Horário e depois por Nome do Aluno
+            // 4. Ordena alfabeticamente pelo nome do beneficiário
             List<Agendamento> listaPresenca = alunosUnicos.values().stream()
-                    .sorted((a1, a2) -> {
-                        if (a1.getHorario() != null && a2.getHorario() != null) {
-                            int compHorario = a1.getHorario().compareTo(a2.getHorario());
-                            if (compHorario != 0) return compHorario;
-                        }
-                        return a1.getBeneficiario().getNome().compareToIgnoreCase(a2.getBeneficiario().getNome());
-                    })
+                    .sorted((a1, a2) -> a1.getBeneficiario().getNome().compareToIgnoreCase(a2.getBeneficiario().getNome()))
                     .toList();
+
+            System.out.println("=========================================");
+            System.out.println(">>> [LOG IMPRESSÃO] Especialidade: " + nomeFinal);
+            System.out.println(">>> [LOG IMPRESSÃO] Registros localizados: " + listaPresenca.size());
+            System.out.println("=========================================");
 
             model.addAttribute("agendamentos", listaPresenca);
 
