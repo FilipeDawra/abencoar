@@ -6,9 +6,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background-color: #f8f9fa; padding-bottom: 50px; }
-        .vago { color: #dc3545; font-weight: bold; }
-        .ocupado { color: #198754; font-weight: bold; }
-        table { border-radius: 10px; overflow: hidden; }
         h2 { color: #2c3e50; text-align: center; font-weight: bold; margin-top: 20px; }
         .card { border: none; border-radius: 15px; }
         .btn-custom-link { border-radius: 30px; font-weight: bold; padding: 12px 35px; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-decoration: none; display: inline-block; }
@@ -32,11 +29,12 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 
+    <!-- 1. SELEÇÃO DA ESPECIALIDADE (MENU PRINCIPAL) -->
     <div class="card shadow mb-4 bg-dark text-white">
         <div class="card-body p-4">
             <form th:action="@{/agenda/gestao}" method="get" id="formFiltroMestre" class="row g-3 align-items-end">
                 <div class="col-md-6 mx-auto text-center">
-                    <label class="form-label fw-bold fs-5 text-warning">🎯 Selecione a Especialidade para abrir o Quadro do Dia:</label>
+                    <label class="form-label fw-bold fs-5 text-warning">🎯 Selecione a Especialidade:</label>
 
                     <input type="hidden" name="nome" th:value="${nomeDigitado}" />
                     <input type="hidden" name="rua" th:value="${ruaDigitada}" />
@@ -59,16 +57,16 @@
 
     <div th:if="${especialidadeIdSelecionada != null}">
         <div class="alert alert-info text-center border-0 shadow-sm fw-bold fs-5 mb-4">
-            Visualizando Quadro de Horários: <span class="text-primary" th:text="${especialidadeSelecionada.nome}">Pilates</span>
+            Modalidade Selecionada: <span class="text-primary" th:text="${especialidadeSelecionada.nome}">Pilates</span>
         </div>
 
+        <!-- 2. GESTÃO DE PROFISSIONAIS VINCULADOS -->
         <div class="card shadow-sm border-primary mb-4">
             <div class="card-body">
                 <h5 class="card-title text-primary fw-bold">👤 Gestão de Profissionais da Especialidade</h5>
 
                 <form th:action="@{/agenda/cadastrar-profissional-especialidade}" method="post" class="row g-3 mt-1 align-items-end border-bottom pb-4 mb-4">
                     <input type="hidden" name="especialidadeId" th:value="${especialidadeIdSelecionada}" />
-                    <input type="hidden" name="dataFiltro" th:value="${dataSelecionada}" />
 
                     <div class="col-md-8">
                         <label class="form-label fw-bold">Nome do Novo Profissional (Professor / Terapeuta / Médico)</label>
@@ -86,7 +84,7 @@
                     <h6 class="fw-bold text-secondary mb-3">📋 Profissionais Atualmente Vinculados:</h6>
 
                     <div th:if="${#lists.isEmpty(professoresCadastrados)}" class="text-muted small">
-                        * Nenhum profissional específico cadastrado para esta modalidade ainda (Usando o padrão do sistema).
+                        * Nenhum profissional específico cadastrado para esta modalidade ainda.
                     </div>
 
                     <div th:if="${not #lists.isEmpty(professoresCadastrados)}" class="d-flex flex-wrap gap-2">
@@ -96,7 +94,6 @@
                             <form th:action="@{/agenda/excluir-profissional-especialidade}" method="post" class="m-0" onsubmit="return confirm('Deseja desvincular este profissional da modalidade?')">
                                 <input type="hidden" name="especialidadeId" th:value="${especialidadeIdSelecionada}" />
                                 <input type="hidden" name="nomeProfissional" th:value="${prof}" />
-                                <input type="hidden" name="dataFiltro" th:value="${dataSelecionada}" />
                                 <button type="submit" class="btn btn-link p-0 text-danger" style="line-height: 1; text-decoration: none;" title="Excluir vínculo">
                                     ❌
                                 </button>
@@ -104,158 +101,15 @@
                         </div>
                     </div>
                 </div>
-
-            </div>
-        </div>
-
-        <div class="card shadow-sm border-warning mb-4">
-            <div class="card-body">
-                <h5 class="card-title text-warning fw-bold">⚡ Painel de Geração de Slots (Lote)</h5>
-                <form th:action="@{/agenda/gerar-mensal}" method="post" class="row g-3 mt-1 align-items-end">
-                    <input type="hidden" name="especialidadeId" th:value="${especialidadeIdSelecionada}" />
-                    <input type="hidden" name="dataFiltro" th:value="${dataSelecionada}" />
-
-                    <div class="col-md-2">
-                        <label class="form-label fw-bold">Mês de Referência</label>
-                        <select name="mes" class="form-select" required>
-                            <option value="1">Janeiro</option>
-                            <option value="2">Fevereiro</option>
-                            <option value="3">Março</option>
-                            <option value="4">Abril</option>
-                            <option value="5">Maio</option>
-                            <option value="6" th:selected="${#temporals.month(dataSelecionada) == 6}">Junho</option>
-                            <option value="7" th:selected="${#temporals.month(dataSelecionada) == 7}">Julho</option>
-                            <option value="8">Agosto</option>
-                            <option value="9">Setembro</option>
-                            <option value="10">Outubro</option>
-                            <option value="11">Novembro</option>
-                            <option value="12">Dezembro</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-2">
-                        <label class="form-label fw-bold">Ano</label>
-                        <input type="number" name="ano" th:value="${#temporals.year(dataSelecionada)}" class="form-control" required />
-                    </div>
-
-                    <div class="col-md-3">
-                        <label class="form-label fw-bold text-dark">⏰ Horário do Atendimento</label>
-                        <input type="time" name="horarioFixo" class="form-control" required />
-                    </div>
-
-                    <div class="col-md-5" id="boxDiasGrupo" th:style="${especialidadeSelecionada != null && (#strings.contains(#strings.toLowerCase(especialidadeSelecionada.nome), 'psico') || #strings.contains(#strings.toLowerCase(especialidadeSelecionada.nome), 'nutri'))} ? 'display: none;' : 'display: block;'">
-                        <label class="form-label fw-bold text-success">🗓️ Dias da Semana Recorrentes</label>
-                        <div class="d-flex gap-2 bg-white p-2 rounded border">
-                            <div class="form-check form-check-inline m-0">
-                                <input class="form-check-input" type="checkbox" name="diasSemana" value="MONDAY" id="loteSeg">
-                                <label class="form-check-label small fw-bold" for="loteSeg">Seg</label>
-                            </div>
-                            <div class="form-check form-check-inline m-0">
-                                <input class="form-check-input" type="checkbox" name="diasSemana" value="TUESDAY" id="loteTer">
-                                <label class="form-check-label small fw-bold" for="loteTer">Ter</label>
-                            </div>
-                            <div class="form-check form-check-inline m-0">
-                                <input class="form-check-input" type="checkbox" name="diasSemana" value="WEDNESDAY" id="loteQua">
-                                <label class="form-check-label small fw-bold" for="loteQua">Qua</label>
-                            </div>
-                            <div class="form-check form-check-inline m-0">
-                                <input class="form-check-input" type="checkbox" name="diasSemana" value="THURSDAY" id="loteQui">
-                                <label class="form-check-label small fw-bold" for="loteQui">Qui</label>
-                            </div>
-                            <div class="form-check form-check-inline m-0">
-                                <input class="form-check-input" type="checkbox" name="diasSemana" value="FRIDAY" id="loteSex">
-                                <label class="form-check-label small fw-bold" for="loteSex">Sex</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-5" id="boxDataClinica" th:style="${especialidadeSelecionada != null && (#strings.contains(#strings.toLowerCase(especialidadeSelecionada.nome), 'psico') || #strings.contains(#strings.toLowerCase(especialidadeSelecionada.nome), 'nutri'))} ? 'display: block;' : 'display: none;'">
-                        <label class="form-label fw-bold text-danger">📅 Data Específica do Atendimento</label>
-                        <input type="date" name="dataEspecifica" class="form-control border-danger" />
-                    </div>
-
-                    <div class="col-12 text-end mt-3">
-                        <button type="submit" class="btn btn-warning text-white fw-bold px-4 py-2" onclick="return confirm('Confirmar a geração de slots em lote para esta modalidade?')">
-                            🚀 Gerar Slots na Agenda
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div class="card shadow mb-5">
-            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center fw-bold">
-                <span>📋 Grade de Vagas Disponíveis para o Dia</span>
-                <form th:action="@{/agenda/gestao}" method="get" class="d-flex gap-2 my-0">
-                    <input type="hidden" name="especialidadeId" th:value="${especialidadeIdSelecionada}" />
-                    <input type="date" name="dataFiltro" th:value="${dataSelecionada}" class="form-control form-control-sm" onchange="this.form.submit()" />
-                </form>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover table-striped my-0 align-middle">
-                        <thead class="table-secondary">
-                        <tr>
-                            <th>Horário</th>
-                            <th style="min-width: 200px;">Profissional</th>
-                            <th>Período</th>
-                            <th>Status / Vincular Membro Existente</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr th:each="a : ${agendamentos}">
-                            <td class="fw-bold text-dark" th:text="${a.horario}">08:00</td>
-                            <td>
-                                <!-- 🚀 CORREÇÃO DA LINHA 213 (De a.professional para a.profissional) -->
-                                <form th:action="@{/agenda/atualizar-professional-slot}" method="post" class="m-0 d-flex align-items-center gap-1">
-                                    <input type="hidden" name="agendamentoId" th:value="${a.id}" />
-                                    <input type="hidden" name="especialidadeId" th:value="${especialidadeIdSelecionada}" />
-                                    <input type="hidden" name="dataFiltro" th:value="${dataSelecionada}" />
-                                    <input type="text" name="novoProfissional" th:value="${a.profissional}"
-                                           class="form-control form-control-sm border-0 bg-transparent fw-bold text-secondary text-truncate p-1"
-                                           style="box-shadow: none;"
-                                           placeholder="Definir profissional..."
-                                           onchange="this.form.submit()"
-                                           onfocus="this.classList.add('border', 'bg-white')"
-                                           onblur="this.classList.remove('border', 'bg-white')"/>
-                                </form>
-                            </td>
-                            <td><span class="badge bg-light text-dark border" th:text="${a.periodo}">MANHA</span></td>
-                            <td>
-                                <div th:if="${a.beneficiario == null}" class="d-flex align-items-center gap-2">
-                                    <span class="vago me-2">🔴 VAGO</span>
-                                    <form th:action="@{/agenda/vincular-existente}" method="post" class="d-flex gap-1 align-items-center my-1">
-                                        <input type="hidden" name="agendamentoId" th:value="${a.id}" />
-                                        <input type="hidden" name="especialidadeNome" th:value="${especialidadeSelecionada?.nome}" />
-
-                                        <select name="beneficiarioId" class="form-select form-select-sm" style="min-width: 250px;" required>
-                                            <option value="" disabled selected>-- Vincular Aluno Existente --</option>
-                                            <option th:each="b : ${todosBeneficiarios}" th:value="${b.matricula}" th:text="${b.nome}"></option>
-                                        </select>
-                                        <button type="submit" class="btn btn-sm btn-success fw-bold">Vincular</button>
-                                    </form>
-                                </div>
-                                <div th:if="${a.beneficiario != null}">
-                                    <span class="ocupado me-2">🟢 OCUPADO:</span>
-                                    <span class="badge bg-success fs-6 px-3" th:text="${a.beneficiario.nome}">Maria</span>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr th:if="${#lists.isEmpty(agendamentos)}">
-                            <td colspan="4" class="text-center text-muted p-3">Nenhum slot criado ou disponível nesta data.</td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
             </div>
         </div>
     </div>
 
+    <!-- 3. BUSCA AVANÇADA DE BENEFICIÁRIOS -->
     <div class="card shadow mb-4">
         <div class="card-header bg-primary text-white fw-bold fs-5">👥 Busca Avançada de Beneficiários</div>
         <div class="card-body p-4">
             <form th:action="@{/agenda/gestao}" method="get" class="row g-3">
-                <input type="hidden" name="dataFiltro" th:value="${dataSelecionada}" />
                 <input type="hidden" name="especialidadeId" th:value="${especialidadeIdSelecionada}" />
 
                 <div class="col-md-4">
@@ -308,6 +162,7 @@
         </div>
     </div>
 
+    <!-- 4. RESULTADOS DA BUSCA -->
     <div class="card shadow mb-5" th:if="${buscaExecutada and not #lists.isEmpty(beneficiarios)}">
         <div class="card-header bg-success text-white fw-bold">🎯 Resultados da Busca Filtrada</div>
         <div class="card-body p-0">
@@ -352,54 +207,60 @@
         🔍 Nenhum membro foi localizado com os termos informados. Verifique os dados digitados!
     </div>
 
+    <!-- RODAPÉ COM BOTÃO DE IMPRESSÃO INTUITIVO -->
     <div class="d-flex justify-content-between mt-5 border-top pt-4">
         <a href="/agenda" class="btn btn-secondary btn-custom-link text-white">⬅️ Recepção (Triagem)</a>
 
-        <!-- Botão de impressão repassando Modalidade e Data Selecionada no Quadro -->
-        <a th:if="${especialidadeIdSelecionada != null}"
-           th:href="@{/agenda/imprimir-presenca(mapEspecialidadeId=${especialidadeIdSelecionada}, especialidadeNome=${especialidadeSelecionada != null ? especialidadeSelecionada.nome : ''}, dataFiltro=${#temporals.format(dataSelecionada, 'yyyy-MM-dd')})}"
-           target="_blank"
-           class="btn btn-success btn-custom-link text-white">
-            🖨️ Imprimir Lista de Chamada do Dia
-        </a>
+        <!-- Botão que abre a modal pop-up de filtro para impressão -->
+        <button th:if="${especialidadeIdSelecionada != null}"
+                type="button"
+                class="btn btn-success btn-custom-link text-white"
+                data-bs-toggle="modal"
+                data-bs-target="#modalFiltroImpressao">
+            🖨️ Imprimir Lista de Chamada
+        </button>
 
-        <!-- Exibe o botão desabilitado com aviso explicativo apenas se nenhuma modalidade foi escolhida -->
         <button th:if="${especialidadeIdSelecionada == null}"
                 class="btn btn-secondary btn-custom-link text-white disabled"
-                title="Selecione uma especialidade acima para habilitar a impressão">
+                title="Selecione uma especialidade para habilitar a impressão">
             🖨️ Escolha uma Modalidade para Imprimir
         </button>
     </div>
 </div>
 
-<script>
-    function gerenciarCamposDoPainel() {
-        const select = document.getElementById('selectFiltroEspecialidade');
-        if (!select) return;
+<!-- MODAL POP-UP: FILTRO DE DATA E HORÁRIO DA TURMA -->
+<div class="modal fade" id="modalFiltroImpressao" tabindex="-1" aria-labelledby="modalFiltroImpressaoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-bold" id="modalFiltroImpressaoLabel">🖨️ Parâmetros da Lista de Chamada</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form th:action="@{/agenda/imprimir-presenca}" method="get" target="_blank">
+                <div class="modal-body">
+                    <input type="hidden" name="mapEspecialidadeId" th:value="${especialidadeIdSelecionada}" />
+                    <input type="hidden" name="especialidadeNome" th:value="${especialidadeSelecionada?.nome}" />
 
-        const opcaoSelecionada = select.options[select.selectedIndex];
-        if (!opcaoSelecionada) return;
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark">📅 Data da Aula / Chamada:</label>
+                        <input type="date" name="dataFiltro" th:value="${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}" class="form-control form-control-lg border-success" required />
+                    </div>
 
-        const nomeEspecialidade = opcaoSelecionada.getAttribute('data-nome') || '';
-        const boxGrupo = document.getElementById('boxDiasGrupo');
-        const boxClinica = document.getElementById('boxDataClinica');
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark">⏰ Horário da Turma (Opcional):</label>
+                        <input type="time" name="horario" class="form-control form-control-lg border-success" placeholder="Ex: 08:00" />
+                        <small class="text-muted">* Deixe o horário em branco para imprimir todas as turmas do dia.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success fw-bold px-4">🖨️ Gerar Folha A4</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
-        if (!boxGrupo || !boxClinica) return;
-
-        if (nomeEspecialidade.toLowerCase().includes('psicologia') || nomeEspecialidade.toLowerCase().includes('nutri') || nomeEspecialidade.toLowerCase().includes('psico')) {
-            boxGrupo.style.display = 'none';
-            boxClinica.style.display = 'block';
-
-            // Gerenciamento de obrigatoriedade dinâmica
-            document.getElementsByName('dataEspecifica')[0].required = true;
-        } else {
-            boxGrupo.style.display = 'block';
-            boxClinica.style.display = 'none';
-
-            document.getElementsByName('dataEspecifica')[0].required = false;
-        }
-    }
-    window.addEventListener('DOMContentLoaded', gerenciarCamposDoPainel);
-</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

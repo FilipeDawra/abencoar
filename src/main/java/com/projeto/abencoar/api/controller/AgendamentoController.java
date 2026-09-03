@@ -521,7 +521,7 @@ public class AgendamentoController {
             @RequestParam(value = "horario", required = false) String horarioStr,
             Model model) {
 
-        // 1. Identifica o nome da especialidade via ID ou Nome
+        // 1. Identifica a especialidade por ID ou Nome
         String nomeBusca = especialidadeNome;
         if ((nomeBusca == null || nomeBusca.isBlank()) && mapEspecialidadeId != null) {
             nomeBusca = BlackespecialidadeService.listarTodas().stream()
@@ -530,42 +530,32 @@ public class AgendamentoController {
                     .findFirst().orElse(null);
         }
 
-        // Define a data alvo para o filtro da folha de presença (padrão: hoje)
+        // Se nenhuma data for enviada, assume o dia atual
         LocalDate dataAlvo = (dataFiltro != null) ? dataFiltro : LocalDate.now();
 
         if (nomeBusca != null && !nomeBusca.isBlank()) {
             final String nomeFinal = nomeBusca.trim();
 
-            // 2. Busca os agendamentos da modalidade FILTRADOS PELA DATA DO QUADRO
-            List<Agendamento> agendamentosDoDia = agendamentoRepository.findAll().stream()
+            // 2. Filtra agendamentos da especialidade pela data e pelo horário escolhidos na Modal Pop-up
+            List<Agendamento> agendamentosFiltrados = agendamentoRepository.findAll().stream()
                     .filter(a -> a.getBeneficiario() != null
                             && a.getEspecialidade() != null
                             && a.getEspecialidade().getNome().trim().equalsIgnoreCase(nomeFinal))
-                    .filter(a -> a.getData() != null && a.getData().equals(dataAlvo)) // 🎯 Filtra exclusivamente o dia selecionado!
                     .filter(a -> {
-                        // 🎯 Filtro opcional por horário da turma (se informado)
+                        // Filtro por Data (se a data do agendamento bater com a data informada)
+                        if (a.getData() != null && !a.getData().equals(dataAlvo)) {
+                            return false;
+                        }
+                        // Filtro opcional por Horário da Turma (se o usuário selecionou na modal)
                         if (horarioStr != null && !horarioStr.isBlank()) {
                             return a.getHorario() != null && a.getHorario().toString().startsWith(horarioStr.trim());
                         }
                         return true;
                     })
-                    .sorted((a1, a2) -> {
-                        // Ordena por horário da turma e depois por nome do beneficiário
-                        if (a1.getHorario() != null && a2.getHorario() != null) {
-                            int compHorario = a1.getHorario().compareTo(a2.getHorario());
-                            if (compHorario != 0) return compHorario;
-                        }
-                        return a1.getBeneficiario().getNome().compareToIgnoreCase(a2.getBeneficiario().getNome());
-                    })
+                    .sorted((a1, a2) -> a1.getBeneficiario().getNome().compareToIgnoreCase(a2.getBeneficiario().getNome()))
                     .toList();
 
-            System.out.println("=========================================");
-            System.out.println(">>> [LOG IMPRESSÃO DIA/HORÁRIO] Especialidade: " + nomeFinal);
-            System.out.println(">>> [LOG IMPRESSÃO DIA/HORÁRIO] Data: " + dataAlvo);
-            System.out.println(">>> [LOG IMPRESSÃO DIA/HORÁRIO] Registros encontrados: " + agendamentosDoDia.size());
-            System.out.println("=========================================");
-
-            model.addAttribute("agendamentos", agendamentosDoDia);
+            model.addAttribute("agendamentos", agendamentosFiltrados);
 
             BlackespecialidadeService.listarTodas().stream()
                     .filter(e -> e.getNome().trim().equalsIgnoreCase(nomeFinal))
@@ -576,6 +566,7 @@ public class AgendamentoController {
         }
 
         model.addAttribute("dataFiltro", dataAlvo);
+        model.addAttribute("horarioFiltro", horarioStr);
 
         return "lista-presenca-impressao";
     }
