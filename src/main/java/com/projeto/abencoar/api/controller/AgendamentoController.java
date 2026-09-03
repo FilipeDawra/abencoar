@@ -518,6 +518,7 @@ public class AgendamentoController {
             @RequestParam(value = "mapEspecialidadeId", required = false) Long mapEspecialidadeId,
             @RequestParam(value = "especialidadeNome", required = false) String especialidadeNome,
             @RequestParam(value = "dataFiltro", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFiltro,
+            @RequestParam(value = "horario", required = false) String horarioStr,
             Model model) {
 
         // 1. Identifica o nome da especialidade via ID ou Nome
@@ -529,37 +530,42 @@ public class AgendamentoController {
                     .findFirst().orElse(null);
         }
 
+        // Define a data alvo para o filtro da folha de presença (padrão: hoje)
+        LocalDate dataAlvo = (dataFiltro != null) ? dataFiltro : LocalDate.now();
+
         if (nomeBusca != null && !nomeBusca.isBlank()) {
             final String nomeFinal = nomeBusca.trim();
 
-            // 2. Busca TODOS os agendamentos que pertençam a esta modalidade e possuam aluno
-            // SEM RESTRIÇÃO DE DATA para evitar zerar com agendamentos de meses anteriores
-            List<Agendamento> todosDaModalidade = agendamentoRepository.findAll().stream()
+            // 2. Busca os agendamentos da modalidade FILTRADOS PELA DATA DO QUADRO
+            List<Agendamento> agendamentosDoDia = agendamentoRepository.findAll().stream()
                     .filter(a -> a.getBeneficiario() != null
                             && a.getEspecialidade() != null
                             && a.getEspecialidade().getNome().trim().equalsIgnoreCase(nomeFinal))
-                    .toList();
-
-            // 3. Remove duplicidades: Garante apenas 1 registro por aluno/matrícula na chamada
-            java.util.Map<String, Agendamento> alunosUnicos = new java.util.LinkedHashMap<>();
-            for (Agendamento a : todosDaModalidade) {
-                String matricula = a.getBeneficiario().getMatricula();
-                if (!alunosUnicos.containsKey(matricula)) {
-                    alunosUnicos.put(matricula, a);
-                }
-            }
-
-            // 4. Ordena alfabeticamente pelo nome do beneficiário
-            List<Agendamento> listaPresenca = alunosUnicos.values().stream()
-                    .sorted((a1, a2) -> a1.getBeneficiario().getNome().compareToIgnoreCase(a2.getBeneficiario().getNome()))
+                    .filter(a -> a.getData() != null && a.getData().equals(dataAlvo)) // 🎯 Filtra exclusivamente o dia selecionado!
+                    .filter(a -> {
+                        // 🎯 Filtro opcional por horário da turma (se informado)
+                        if (horarioStr != null && !horarioStr.isBlank()) {
+                            return a.getHorario() != null && a.getHorario().toString().startsWith(horarioStr.trim());
+                        }
+                        return true;
+                    })
+                    .sorted((a1, a2) -> {
+                        // Ordena por horário da turma e depois por nome do beneficiário
+                        if (a1.getHorario() != null && a2.getHorario() != null) {
+                            int compHorario = a1.getHorario().compareTo(a2.getHorario());
+                            if (compHorario != 0) return compHorario;
+                        }
+                        return a1.getBeneficiario().getNome().compareToIgnoreCase(a2.getBeneficiario().getNome());
+                    })
                     .toList();
 
             System.out.println("=========================================");
-            System.out.println(">>> [LOG IMPRESSÃO] Especialidade: " + nomeFinal);
-            System.out.println(">>> [LOG IMPRESSÃO] Registros localizados: " + listaPresenca.size());
+            System.out.println(">>> [LOG IMPRESSÃO DIA/HORÁRIO] Especialidade: " + nomeFinal);
+            System.out.println(">>> [LOG IMPRESSÃO DIA/HORÁRIO] Data: " + dataAlvo);
+            System.out.println(">>> [LOG IMPRESSÃO DIA/HORÁRIO] Registros encontrados: " + agendamentosDoDia.size());
             System.out.println("=========================================");
 
-            model.addAttribute("agendamentos", listaPresenca);
+            model.addAttribute("agendamentos", agendamentosDoDia);
 
             BlackespecialidadeService.listarTodas().stream()
                     .filter(e -> e.getNome().trim().equalsIgnoreCase(nomeFinal))
@@ -569,7 +575,7 @@ public class AgendamentoController {
             model.addAttribute("agendamentos", List.of());
         }
 
-        model.addAttribute("dataFiltro", dataFiltro != null ? dataFiltro : LocalDate.now());
+        model.addAttribute("dataFiltro", dataAlvo);
 
         return "lista-presenca-impressao";
     }

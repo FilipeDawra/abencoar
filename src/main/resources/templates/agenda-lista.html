@@ -355,12 +355,12 @@
     <div class="d-flex justify-content-between mt-5 border-top pt-4">
         <a href="/agenda" class="btn btn-secondary btn-custom-link text-white">⬅️ Recepção (Triagem)</a>
 
-        <!-- Botão de impressão com validação direta de id e nome da especialidade -->
+        <!-- Botão de impressão repassando Modalidade e Data Selecionada no Quadro -->
         <a th:if="${especialidadeIdSelecionada != null}"
-           th:href="@{/agenda/imprimir-presenca(mapEspecialidadeId=${especialidadeIdSelecionada}, especialidadeNome=${especialidadeSelecionada != null ? especialidadeSelecionada.nome : ''})}"
+           th:href="@{/agenda/imprimir-presenca(mapEspecialidadeId=${especialidadeIdSelecionada}, especialidadeNome=${especialidadeSelecionada != null ? especialidadeSelecionada.nome : ''}, dataFiltro=${#temporals.format(dataSelecionada, 'yyyy-MM-dd')})}"
            target="_blank"
            class="btn btn-success btn-custom-link text-white">
-            🖨️ Imprimir Lista de Chamada
+            🖨️ Imprimir Lista de Chamada do Dia
         </a>
 
         <!-- Exibe o botão desabilitado com aviso explicativo apenas se nenhuma modalidade foi escolhida -->
